@@ -1,5 +1,106 @@
-/* Styles for the app */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-    font-family: Arial, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f5f5f5;
+  color: #222;
+  line-height: 1.5;
 }
-/* Add more styles as needed */
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+
+.muted { color: #666; font-size: 0.9rem; }
+code { background: #e8e8e8; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.85em; }
+
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.row:last-child { margin-bottom: 0; }
+
+label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; }
+
+input[type="number"] { width: 4.5rem; padding: 0.3rem 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
+input[type="text"], input:not([type]) {
+  padding: 0.3rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; min-width: 10rem;
+}
+select { padding: 0.3rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; min-width: 12rem; }
+
+button {
+  padding: 0.35rem 0.9rem;
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+button:hover:not(:disabled) { background: #1558b0; }
+button:disabled { background: #aaa; cursor: not-allowed; }
+
+textarea {
+  width: 100%;
+  font-family: monospace;
+  font-size: 0.82rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pill {
+  background: #f0f4ff;
+  border: 1px solid #c8d8f8;
+  border-radius: 6px;
+  padding: 0.5rem 0.9rem;
+  min-width: 120px;
+  text-align: center;
+}
+.pill .muted { font-size: 0.78rem; }
+.pill b { font-size: 1.1rem; }
+
+.tableWrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+th, td { padding: 0.4rem 0.6rem; border: 1px solid #e0e0e0; text-align: right; }
+th:nth-child(2), td:nth-child(2) { text-align: left; }
+th { background: #f0f0f0; font-weight: 600; }
+tr:nth-child(even) { background: #fafafa; }
+
+pre {
+  font-family: monospace;
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+  background: #f8f8f8;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}

@@ -1,13 +1,86 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./assets/style.css">
-    <title>Amiibo Statistics</title>
-</head>
-<body>
-    <h1>Amiibo Statistics</h1>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Amiibo Stats (Elo + Tournament Details)</title>
+    <link rel="stylesheet" href="./assets/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Amiibo Stats</h1>
+      <p class="muted">
+        Elo/rankings come from <code>Season Data/Season &lt;n&gt;.csv</code>. Tournament details come from text files in
+        <code>tournaments/season-&lt;n&gt;/</code>.
+      </p>
+
+      <section class="card">
+        <h2>Load season + tournament</h2>
+
+        <div class="row">
+          <label>
+            Season:
+            <input id="season" type="number" value="7" min="1" step="1" />
+          </label>
+
+          <button id="loadSeasonBtn">Load season</button>
+          <span id="status" class="muted"></span>
+        </div>
+
+        <div class="row">
+          <label>
+            Tournament:
+            <select id="tournamentSelect" disabled></select>
+          </label>
+          <button id="loadTournamentBtn" disabled>Load tournament</button>
+          <button id="computeBtn" disabled>Compute details</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Tournament text (auto-loaded)</h2>
+        <textarea id="input" rows="12" spellcheck="false"></textarea>
+      </section>
+
+      <section class="card">
+        <h2>Summary</h2>
+        <div id="summary" class="grid"></div>
+      </section>
+
+      <section class="card">
+        <h2>Detailed stats (sorted by season ranking)</h2>
+        <div class="tableWrap">
+          <table id="stats">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Character</th>
+                <th>Elo</th>
+                <th>Matches</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Upsets</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="muted">
+          "Upset" = winner had &lt; 50% expected win probability based on Elo (only counted if both players have Elo).
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Head-to-head (within this tournament)</h2>
+        <div class="row">
+          <label>A: <input id="h2hA" /></label>
+          <label>B: <input id="h2hB" /></label>
+          <button id="h2hBtn" disabled>Lookup</button>
+        </div>
+        <pre id="h2hOut"></pre>
+      </section>
+    </main>
+
     <script type="module" src="./assets/app.js"></script>
-</body>
+  </body>
 </html>
