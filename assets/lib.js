@@ -91,6 +91,44 @@ export async function loadSeasonRoster(season) {
   return { roster, eloByNameKey, displayByNameKey };
 }
 
+/** Loads the all-time roster from "Season Data/All Times.csv". */
+export async function loadAllTimesRoster() {
+  const url = `./${encodeURIComponent("Season Data")}/${encodeURIComponent("All Times.csv")}`;
+  const text = await fetchText(url);
+  const lines = text.split(/\r?\n/g).map((l) => l.trim()).filter(Boolean);
+
+  const roster = [];
+  const eloByNameKey = new Map();
+  const displayByNameKey = new Map();
+
+  for (const line of lines) {
+    const cols = parseCsvLoose(line);
+    const rank = Number(stripQuotes(cols[0] ?? ""));
+    const name = stripQuotes(cols[1] ?? "");
+    const elo = Number(stripQuotes(cols[2] ?? ""));
+    const alias = stripQuotes(cols[4] ?? "");
+
+    if (!name || !Number.isFinite(elo)) continue;
+
+    const row = { rank: Number.isFinite(rank) ? rank : null, name: norm(name), alias: norm(alias), elo };
+    roster.push(row);
+
+    const keys = new Set([canonKey(row.name)]);
+    if (row.alias) keys.add(canonKey(row.alias));
+    for (const k of keys) {
+      eloByNameKey.set(k, elo);
+      displayByNameKey.set(k, row.name);
+    }
+  }
+
+  roster.sort((a, b) => {
+    if (a.rank != null && b.rank != null) return a.rank - b.rank;
+    return b.elo - a.elo;
+  });
+
+  return { roster, eloByNameKey, displayByNameKey };
+}
+
 export async function loadTournamentIndex(season) {
   const url = `./tournaments/season-${encodeURIComponent(season)}/index.json`;
   return fetchJson(url);

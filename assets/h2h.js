@@ -1,6 +1,7 @@
 import {
   SEASON_COUNT,
   loadSeasonRoster,
+  loadAllTimesRoster,
   loadAndAggregateAllTournaments,
   loadAllSeasonsData,
   populateSeasonSelect,
@@ -16,26 +17,23 @@ populateSeasonSelect(seasonSelect, SEASON_COUNT);
 
 let currentCtx = null;
 let currentAgg = null;
-let currentLabel = `Season ${SEASON_COUNT}`;
+let currentSeason = SEASON_COUNT;
+let isAllTime = false;
 
-function setStatus(msg) { statusEl.textContent = msg; }
+function setStatus(msg) {
+  statusEl.textContent = msg;
+}
 
-async function loadSeason(seasonVal) {
+// ── Original per-season function (unchanged) ──────────────────────────────────
+
+async function loadSeason(season) {
+  setStatus(`Loading season ${season}…`);
+  currentSeason = season;
+  isAllTime = false;
   h2hResult.innerHTML = "";
   try {
-    if (seasonVal === "alltime") {
-      setStatus("Loading all seasons…");
-      currentLabel = "All Time";
-      const all = await loadAllSeasonsData(SEASON_COUNT);
-      currentCtx = all.ctx;
-      currentAgg = all;
-    } else {
-      const season = Number(seasonVal);
-      currentLabel = `Season ${season}`;
-      setStatus(`Loading season ${season}…`);
-      currentCtx = await loadSeasonRoster(season);
-      currentAgg = await loadAndAggregateAllTournaments(season, currentCtx);
-    }
+    currentCtx = await loadSeasonRoster(season);
+    currentAgg = await loadAndAggregateAllTournaments(season, currentCtx);
     populateCharSelects(currentCtx.roster);
     renderH2H();
     setStatus("Loaded.");
@@ -44,6 +42,28 @@ async function loadSeason(seasonVal) {
     setStatus(String(e?.message ?? e));
   }
 }
+
+// ── All Time function ─────────────────────────────────────────────────────────
+
+async function loadSeasonAllTime() {
+  setStatus("Loading all seasons…");
+  isAllTime = true;
+  h2hResult.innerHTML = "";
+  try {
+    currentCtx = await loadAllTimesRoster();
+    const all = await loadAllSeasonsData(SEASON_COUNT);
+    // Use the all-time roster for display but all-time h2h/tournament data for stats
+    currentAgg = all;
+    populateCharSelects(currentCtx.roster);
+    renderH2H();
+    setStatus("Loaded.");
+  } catch (e) {
+    console.error(e);
+    setStatus(String(e?.message ?? e));
+  }
+}
+
+// ── Shared helpers ────────────────────────────────────────────────────────────
 
 function populateCharSelects(roster) {
   const prevA = charASelect.value;
@@ -61,6 +81,7 @@ function populateCharSelects(roster) {
     }
   }
 
+  // Restore previous selections when possible
   if (roster.find((r) => r.name === prevA)) charASelect.value = prevA;
   if (roster.find((r) => r.name === prevB)) {
     charBSelect.value = prevB;
@@ -79,6 +100,7 @@ function renderH2H() {
     h2hResult.innerHTML = "<p class='muted'>Select two characters above.</p>";
     return;
   }
+
   if (aName === bName) {
     h2hResult.innerHTML = "<p class='muted'>Select two <em>different</em> characters.</p>";
     return;
@@ -87,6 +109,7 @@ function renderH2H() {
   const aRoster = currentCtx.roster.find((r) => r.name === aName);
   const bRoster = currentCtx.roster.find((r) => r.name === bName);
 
+  // Find h2h record
   const x = aName < bName ? aName : bName;
   const y = aName < bName ? bName : aName;
   const h2hKey = `${x}__${y}`;
@@ -102,7 +125,7 @@ function renderH2H() {
   const rankDiff = (aRoster?.rank ?? 0) - (bRoster?.rank ?? 0);
   const eloDiff = (aRoster?.elo ?? 0) - (bRoster?.elo ?? 0);
 
-  const overallWinner =
+  const seasonWinner =
     aWins > bWins ? aName :
     bWins > aWins ? bName :
     null;
@@ -110,6 +133,7 @@ function renderH2H() {
   const aWinClass = aWins > bWins ? "h2h-leader" : "";
   const bWinClass = bWins > aWins ? "h2h-leader" : "";
 
+  const seasonLabel = isAllTime ? "All Time" : `Season ${currentSeason}`;
   const matchList = buildMatchList(aName, bName);
 
   h2hResult.innerHTML = `
@@ -124,9 +148,9 @@ function renderH2H() {
 
       <div class="h2h-center">
         <div class="h2h-vs">VS</div>
-        <div class="h2h-total">${total} match${total !== 1 ? "es" : ""} — ${currentLabel}</div>
-        ${overallWinner
-          ? `<div class="h2h-verdict">Winner: <strong>${overallWinner}</strong></div>`
+        <div class="h2h-total">${total} match${total !== 1 ? "es" : ""} in ${seasonLabel}</div>
+        ${seasonWinner
+          ? `<div class="h2h-verdict">${isAllTime ? "" : "Season "}winner: <strong>${seasonWinner}</strong></div>`
           : total > 0
             ? `<div class="h2h-verdict">Even series</div>`
             : `<div class="muted">No matches recorded</div>`
@@ -162,8 +186,10 @@ function buildMatchList(aName, bName) {
     }
   }
 
+  const seasonLabel = isAllTime ? "All Time" : `Season ${currentSeason}`;
+
   if (rows.length === 0) {
-    return `<p class="muted" style="margin-top:1.5rem">No recorded matches between these two — ${currentLabel}.</p>`;
+    return `<p class="muted" style="margin-top:1.5rem">No recorded matches between these two in ${seasonLabel}.</p>`;
   }
 
   let html = `
@@ -192,8 +218,15 @@ function buildMatchList(aName, bName) {
   return html;
 }
 
-seasonSelect.addEventListener("change", () => loadSeason(seasonSelect.value));
+// ── Event listeners ───────────────────────────────────────────────────────────
+
+seasonSelect.addEventListener("change", () => {
+  const val = seasonSelect.value;
+  if (val === "alltime") loadSeasonAllTime();
+  else loadSeason(Number(val));
+});
+
 charASelect.addEventListener("change", renderH2H);
 charBSelect.addEventListener("change", renderH2H);
 
-loadSeason(String(SEASON_COUNT));
+loadSeason(SEASON_COUNT);
