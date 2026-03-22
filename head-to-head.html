@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Amiibo Stats — Head-to-Head</title>
+    <link rel="stylesheet" href="./assets/style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <span class="site-title">🎮 Amiibo Stats</span>
+        <nav class="site-nav">
+          <a href="./index.html" class="nav-link">Tournaments</a>
+          <a href="./characters.html" class="nav-link">Characters</a>
+          <a href="./head-to-head.html" class="nav-link active">Head-to-Head</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1>Head-to-Head</h1>
+
+      <div class="controls card">
+        <div class="row">
+          <label>
+            Season:
+            <select id="seasonSelect"></select>
+          </label>
+          <label>
+            Character A:
+            <select id="charA"></select>
+          </label>
+          <label>
+            Character B:
+            <select id="charB"></select>
+          </label>
+          <span id="status" class="muted"></span>
+        </div>
+      </div>
+
+      <section class="card">
+        <div id="h2hResult">
+          <p class="muted">Select a season and two characters above.</p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./assets/h2h.js"></script>
+  </body>
+</html>
