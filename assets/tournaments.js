@@ -13,30 +13,58 @@ const statusEl = document.getElementById("status");
 const summaryEl = document.getElementById("summary");
 const matchesBody = document.querySelector("#matchesTable tbody");
 
-let seasonCtx = null;
 let currentSeason = SEASON_COUNT;
 
 populateSeasonSelect(seasonSelect, SEASON_COUNT);
 
-function setStatus(msg) {
-  statusEl.textContent = msg;
+function setStatus(msg) { statusEl.textContent = msg; }
+function clearResults() { summaryEl.innerHTML = ""; matchesBody.innerHTML = ""; }
+
+/**
+ * Parse a tournament option value into { season, filename }.
+ * All-Time options are encoded as "7:March Madness.txt".
+ * Per-season options are just "March Madness.txt".
+ */
+function parseTournamentOption(val) {
+  const colon = val.indexOf(":");
+  if (colon !== -1) {
+    return { season: Number(val.slice(0, colon)), filename: val.slice(colon + 1) };
+  }
+  return { season: currentSeason, filename: val };
 }
 
-function clearResults() {
-  summaryEl.innerHTML = "";
-  matchesBody.innerHTML = "";
-}
-
-async function loadSeason(season) {
-  setStatus(`Loading season ${season}…`);
-  currentSeason = season;
+async function loadSeason(seasonVal) {
   clearResults();
-  try {
-    seasonCtx = await loadSeasonRoster(season);
-    const idx = await loadTournamentIndex(season);
-    const files = idx.tournaments ?? [];
+  tournamentSelect.innerHTML = "";
 
-    tournamentSelect.innerHTML = "";
+  if (seasonVal === "alltime") {
+    setStatus("Loading all tournaments…");
+    let found = false;
+    for (let s = SEASON_COUNT; s >= 1; s--) {
+      try {
+        const idx = await loadTournamentIndex(s);
+        for (const f of idx.tournaments ?? []) {
+          const opt = document.createElement("option");
+          opt.value = `${s}:${f}`;
+          opt.textContent = `S${s} — ${f.replace(/\.txt$/i, "")}`;
+          tournamentSelect.appendChild(opt);
+          found = true;
+        }
+      } catch (e) {
+        console.warn(`Season ${s} index:`, e.message);
+      }
+    }
+    if (!found) { setStatus("No tournaments found."); return; }
+    const { season, filename } = parseTournamentOption(tournamentSelect.value);
+    await loadTournament(season, filename);
+    return;
+  }
+
+  currentSeason = Number(seasonVal);
+  setStatus(`Loading season ${currentSeason}…`);
+  try {
+    const idx = await loadTournamentIndex(currentSeason);
+    const files = idx.tournaments ?? [];
     if (files.length === 0) {
       const opt = document.createElement("option");
       opt.textContent = "No tournaments";
@@ -44,15 +72,13 @@ async function loadSeason(season) {
       setStatus("No tournaments found for this season.");
       return;
     }
-
     for (const f of files) {
       const opt = document.createElement("option");
       opt.value = f;
       opt.textContent = f.replace(/\.txt$/i, "");
       tournamentSelect.appendChild(opt);
     }
-
-    await loadTournament(season, files[0]);
+    await loadTournament(currentSeason, files[0]);
   } catch (e) {
     console.error(e);
     setStatus(String(e?.message ?? e));
@@ -64,8 +90,10 @@ async function loadTournament(season, filename) {
   setStatus(`Loading ${filename.replace(/\.txt$/i, "")}…`);
   clearResults();
   try {
+    // Always load the correct season's roster for name resolution
+    const ctx = await loadSeasonRoster(season);
     const text = await loadTournamentText(season, filename);
-    const state = computeTournamentResults(text, seasonCtx);
+    const state = computeTournamentResults(text, ctx);
     renderResults(state);
     setStatus("Loaded.");
   } catch (e) {
@@ -96,27 +124,43 @@ function renderResults(state) {
     summaryEl.appendChild(div);
   }
 
-  // Match results table
+  // Match results grouped by section
   matchesBody.innerHTML = "";
-  let num = 0;
-  for (const m of state.matches) {
-    num++;
-    const tr = document.createElement("tr");
-    if (m.isUpset) tr.classList.add("upset-row");
-    tr.innerHTML = `
-      <td>${num}</td>
-      <td class="winner-cell">${m.winner}</td>
-      <td class="score-cell">${m.winnerScore} – ${m.loserScore}</td>
-      <td>${m.loser}</td>
-      <td>${m.isUpset ? "⚡ Upset" : ""}</td>
-    `;
-    matchesBody.appendChild(tr);
+  let globalNum = 0;
+
+  for (const section of state.sections) {
+    if (section.matches.length === 0) continue;
+
+    // Section header row
+    const hdr = document.createElement("tr");
+    hdr.className = "section-header-row";
+    const label = section.topN
+      ? `${section.name} — Top ${section.topN}`
+      : section.name;
+    hdr.innerHTML = `<td colspan="5" class="section-header-cell">${label}</td>`;
+    matchesBody.appendChild(hdr);
+
+    // Match rows
+    for (const m of section.matches) {
+      globalNum++;
+      const tr = document.createElement("tr");
+      if (m.isUpset) tr.classList.add("upset-row");
+      tr.innerHTML = `
+        <td>${globalNum}</td>
+        <td class="winner-cell">${m.winner}</td>
+        <td class="score-cell">${m.winnerScore} – ${m.loserScore}</td>
+        <td>${m.loser}</td>
+        <td>${m.isUpset ? "⚡ Upset" : ""}</td>
+      `;
+      matchesBody.appendChild(tr);
+    }
   }
 }
 
-seasonSelect.addEventListener("change", () => loadSeason(Number(seasonSelect.value)));
+seasonSelect.addEventListener("change", () => loadSeason(seasonSelect.value));
 tournamentSelect.addEventListener("change", () => {
-  if (seasonCtx) loadTournament(currentSeason, tournamentSelect.value);
+  const { season, filename } = parseTournamentOption(tournamentSelect.value);
+  loadTournament(season, filename);
 });
 
-loadSeason(SEASON_COUNT);
+loadSeason(String(SEASON_COUNT));

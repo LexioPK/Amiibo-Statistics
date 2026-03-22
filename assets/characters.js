@@ -2,6 +2,7 @@ import {
   SEASON_COUNT,
   loadSeasonRoster,
   loadAndAggregateAllTournaments,
+  loadAllSeasonsData,
   populateSeasonSelect,
   pct,
   consistencyScore,
@@ -14,25 +15,33 @@ const noDataMsg = document.getElementById("noDataMsg");
 
 populateSeasonSelect(seasonSelect, SEASON_COUNT);
 
-function setStatus(msg) {
-  statusEl.textContent = msg;
-}
+function setStatus(msg) { statusEl.textContent = msg; }
 
-async function loadAndRender(season) {
-  setStatus(`Loading season ${season} data…`);
+async function loadAndRender(seasonVal) {
   statsBody.innerHTML = "";
   if (noDataMsg) noDataMsg.hidden = true;
 
   try {
-    const ctx = await loadSeasonRoster(season);
-    const agg = await loadAndAggregateAllTournaments(season, ctx);
+    let roster, perChar;
 
-    const hasAnyData = [...agg.perChar.values()].some((s) => s.matches > 0);
+    if (seasonVal === "alltime") {
+      setStatus("Loading all seasons…");
+      const all = await loadAllSeasonsData(SEASON_COUNT);
+      roster = all.ctx.roster;
+      perChar = all.perChar;
+    } else {
+      const season = Number(seasonVal);
+      setStatus(`Loading season ${season} data…`);
+      const ctx = await loadSeasonRoster(season);
+      const agg = await loadAndAggregateAllTournaments(season, ctx);
+      roster = ctx.roster;
+      perChar = agg.perChar;
+    }
 
+    const hasAnyData = [...perChar.values()].some((s) => s.matches > 0);
     if (noDataMsg) noDataMsg.hidden = hasAnyData;
-
-    renderStats(ctx.roster, agg.perChar);
-    setStatus(hasAnyData ? "Loaded." : "No tournament data found for this season.");
+    renderStats(roster, perChar);
+    setStatus(hasAnyData ? "Loaded." : "No tournament data found.");
   } catch (e) {
     console.error(e);
     setStatus(String(e?.message ?? e));
@@ -51,7 +60,6 @@ function renderStats(roster, perChar) {
     const cs = consistencyScore(st.wins, st.matches, st.expectedWins);
     const consistencyText = cs != null ? `${cs}%` : "—";
 
-    // Highlight over/under-performers
     let perfClass = "";
     if (cs != null) {
       if (cs >= 80) perfClass = "perf-good";
@@ -75,5 +83,5 @@ function renderStats(roster, perChar) {
   }
 }
 
-seasonSelect.addEventListener("change", () => loadAndRender(Number(seasonSelect.value)));
-loadAndRender(SEASON_COUNT);
+seasonSelect.addEventListener("change", () => loadAndRender(seasonSelect.value));
+loadAndRender(String(SEASON_COUNT));
