@@ -108,8 +108,6 @@ function renderResults(state) {
   const pills = [
     ["Matches", state.matchesCounted],
     ["Upsets", state.totalUpsets],
-    ["Byes Ignored", state.matchesIgnoredBye],
-    ["Skipped (no score)", state.matchesSkippedNoScore],
   ];
   for (const [label, val] of pills) {
     const div = document.createElement("div");

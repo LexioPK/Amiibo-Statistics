@@ -199,28 +199,32 @@ export function parseTournamentSections(rawText) {
 }
 
 /**
- * Returns a [primary, secondary] sort key.
+ * Returns a [primary, secondary, tertiary] sort key.
  * Display order: ascending (smallest key → top of page = most important).
  *
- * Grand Finals (topN 2)          → [2, 0]   — first
- * Winners bracket sections       → [topN, 0]
- * Losers bracket sections        → [topN, 1] — below matching winners
- * Qualifier pools ("Round N")    → [99990 + N, 0]
- * Unnamed qualifiers             → [99999, 0] — last
+ * Grand Finals Set 2 (topN 2)    → [2, 0, -2]  — first (higher set # sorts first)
+ * Grand Finals Set 1 (topN 2)    → [2, 0, -1]  — second
+ * Winners bracket sections       → [topN, 0, 0]
+ * Losers bracket sections        → [topN, 1, 0] — below matching winners
+ * Qualifier pools ("Round N")    → [99990 + N, 0, 0]
+ * Unnamed qualifiers             → [99999, 0, 0] — last
  */
 export function sectionSortKey(section) {
-  if (section.name === "Qualifiers") return [99999, 0];
+  if (section.name === "Qualifiers") return [99999, 0, 0];
 
   // Standalone pool round: "Round N"
   if (/^Round\s+\d+\s*$/i.test(section.name)) {
     const m = section.name.match(/(\d+)/);
     const n = m ? parseInt(m[1], 10) : 0;
-    return [99990 + n, 0];
+    return [99990 + n, 0, 0];
   }
 
   const isLosers = /^Losers\b/i.test(section.name);
   const topN = section.topN ?? 99998;
-  return [topN, isLosers ? 1 : 0];
+  // When multiple Grand Finals sets exist (Set 1, Set 2…), display higher sets first.
+  const setM = section.name.match(/\bSet\s+(\d+)/i);
+  const setOrder = setM ? -parseInt(setM[1], 10) : 0;
+  return [topN, isLosers ? 1 : 0, setOrder];
 }
 
 // ── Competitor-line parsing ───────────────────────────────────────────────────
@@ -374,9 +378,11 @@ export function computeTournamentResults(text, ctx) {
 
   // Sort sections: Grand Finals first → Qualifiers last
   processedSections.sort((a, b) => {
-    const [a0, a1] = a.sortKey;
-    const [b0, b1] = b.sortKey;
-    return a0 !== b0 ? a0 - b0 : a1 - b1;
+    const [a0, a1, a2 = 0] = a.sortKey;
+    const [b0, b1, b2 = 0] = b.sortKey;
+    if (a0 !== b0) return a0 - b0;
+    if (a1 !== b1) return a1 - b1;
+    return a2 - b2;
   });
 
   return {
