@@ -175,7 +175,7 @@ function renderH2H() {
 
 function buildMatchList(aName, bName) {
   const rows = [];
-  for (const { name: tName, result } of currentAgg.tournamentResults) {
+  for (const { name: tName, result } of [...currentAgg.tournamentResults].reverse()) {
     for (const m of result.matches) {
       if (
         (m.winner === aName && m.loser === bName) ||
