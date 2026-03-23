@@ -253,7 +253,7 @@ export function parseCompetitorLine(line) {
     score = Number(parts.pop());
   }
 
-  const nameRaw = norm(parts.join(" "));
+  const nameRaw = norm(parts.join(" ").replace(/\[\d+\]/g, ""));
 
   // Treat placeholder lines like "Winner of 128" / "Loser of 128" as byes
   if (/^(Winner|Loser)\s+of\s+\d+$/i.test(nameRaw)) {
