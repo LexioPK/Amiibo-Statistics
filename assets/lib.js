@@ -62,6 +62,7 @@ export async function loadSeasonRoster(season) {
   const roster = [];
   const eloByNameKey = new Map();
   const displayByNameKey = new Map();
+  const rankByNameKey = new Map();
 
   for (const line of lines) {
     const cols = parseCsvLoose(line);
@@ -80,6 +81,7 @@ export async function loadSeasonRoster(season) {
     for (const k of keys) {
       eloByNameKey.set(k, elo);
       displayByNameKey.set(k, row.name);
+      if (row.rank != null) rankByNameKey.set(k, row.rank);
     }
   }
 
@@ -88,7 +90,7 @@ export async function loadSeasonRoster(season) {
     return b.elo - a.elo;
   });
 
-  return { roster, eloByNameKey, displayByNameKey };
+  return { roster, eloByNameKey, displayByNameKey, rankByNameKey };
 }
 
 /** Loads the all-time roster from "Season Data/All Times.csv". */
@@ -100,6 +102,7 @@ export async function loadAllTimesRoster() {
   const roster = [];
   const eloByNameKey = new Map();
   const displayByNameKey = new Map();
+  const rankByNameKey = new Map();
 
   for (const line of lines) {
     const cols = parseCsvLoose(line);
@@ -118,6 +121,7 @@ export async function loadAllTimesRoster() {
     for (const k of keys) {
       eloByNameKey.set(k, elo);
       displayByNameKey.set(k, row.name);
+      if (row.rank != null) rankByNameKey.set(k, row.rank);
     }
   }
 
@@ -126,7 +130,7 @@ export async function loadAllTimesRoster() {
     return b.elo - a.elo;
   });
 
-  return { roster, eloByNameKey, displayByNameKey };
+  return { roster, eloByNameKey, displayByNameKey, rankByNameKey };
 }
 
 export async function loadTournamentIndex(season) {
@@ -302,6 +306,10 @@ export function computeTournamentResults(text, ctx) {
     return ctx.eloByNameKey.get(canonKey(nameRaw)) ?? null;
   }
 
+  function rankFor(nameRaw) {
+    return ctx.rankByNameKey?.get(canonKey(nameRaw)) ?? null;
+  }
+
   const processedSections = [];
 
   for (const section of rawSections) {
@@ -320,14 +328,16 @@ export function computeTournamentResults(text, ctx) {
       const d2 = toDisplay(c2.nameRaw);
       const elo1 = eloFor(c1.nameRaw);
       const elo2 = eloFor(c2.nameRaw);
+      const rank1 = rankFor(c1.nameRaw);
+      const rank2 = rankFor(c2.nameRaw);
 
       const isC1Winner = c1.score > c2.score;
       const winner = isC1Winner
-        ? { name: d1, elo: elo1, score: c1.score }
-        : { name: d2, elo: elo2, score: c2.score };
+        ? { name: d1, elo: elo1, rank: rank1, score: c1.score }
+        : { name: d2, elo: elo2, rank: rank2, score: c2.score };
       const loser = isC1Winner
-        ? { name: d2, elo: elo2, score: c2.score }
-        : { name: d1, elo: elo1, score: c1.score };
+        ? { name: d2, elo: elo2, rank: rank2, score: c2.score }
+        : { name: d1, elo: elo1, rank: rank1, score: c1.score };
 
       const e1 = ensure(d1, elo1);
       const e2 = ensure(d2, elo2);
@@ -352,9 +362,11 @@ export function computeTournamentResults(text, ctx) {
       h2h.set(h2hKey, h2hRow);
 
       let isUpset = false;
-      if (winner.elo != null && loser.elo != null) {
-        const p = expectedWinProb(winner.elo, loser.elo);
-        if (p < 0.5) {
+      if (winner.rank != null && loser.rank != null) {
+        // Upset: winner is ranked at least `threshold` spots below the loser.
+        // For top-10 losers the bar is lower (5 spots); otherwise 10 spots.
+        const threshold = loser.rank <= 10 ? 5 : 10;
+        if (winner.rank - loser.rank >= threshold) {
           ensure(winner.name, winner.elo).upsets++;
           totalUpsets++;
           isUpset = true;
