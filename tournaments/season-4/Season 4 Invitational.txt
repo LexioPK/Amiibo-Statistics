@@ -1,0 +1,552 @@
+Winners Round 1
+Top 128
+1	Roy	 	
+Bye	 
+2	Samus	2	
+Min Min	3
+3	Pokemon Trainer	 	
+Bye	 
+4	Bye	 	
+Lucina	 
+5	Young Link	 	
+Bye	 
+6	Wii Fit Trainer	0	
+Mewtwo	3
+7	Mii Swordfighter	2	
+Richter	3
+8	Bye	 	
+Banjo & Kazooie	 
+9	Isabelle	 	
+Bye	 
+10	Bayonetta	1	
+Corrin	3
+11	Palutena	 	
+Bye	 
+12	Bye	 	
+Daisy	 
+13	Wolf	 	
+Bye	 
+14	Bye	 	
+Ganondorf	 
+15	Marth	3	
+Sonic	0
+16	Bye	 	
+Zelda	 
+17	Ridley	 	
+Bye	 
+18	Olimar	3	
+Mr. Game & Watch	1
+19	Dr. Mario	 	
+Bye	 
+20	Bye	 	
+Villager	 
+21	Steve	 	
+Bye	 
+22	Dark Pit	3	
+Lucas	1
+23	Luigi	3	
+Simon	1
+24	Bye	 	
+Pichu	 
+25	Snake	 	
+Bye	 
+26	Peach	0	
+Sephiroth	3
+27	Falco	3	
+Ike	0
+28	Bye	 	
+Chrom	 
+29	King Dedede	 	
+Bye	 
+30	Bye	 	
+Mii Brawler	 
+31	Sheik	2	
+Greninja	3
+32	Bye	 	
+Byleth	 
+33	Donkey Kong	 	
+Bye	 
+34	Jigglypuff	1	
+Ryu	3
+35	Metaknight	 	
+Bye	 
+36	Bye	 	
+King K. Rool	 
+37	Joker	 	
+Bye	 
+38	Duck Hunt	0	
+Captain Falcon	3
+39	Wario	2	
+Pac-Man	3
+40	Bye	 	
+Incineroar	 
+41	Piranha Plant	 	
+Bye	 
+42	Robin	1	
+Fox	3
+43	Bowser Jr.	 	
+Bye	 
+44	Bye	 	
+Rosalina & Luma	 
+45	Little Mac	 	
+Bye	 
+46	Bye	 	
+Link	 
+47	Inkling	3	
+Ken	1
+48	Bye	 	
+Hero	 
+49	Sans	 	
+Bye	 
+50	Mega Man	3	
+Lucario	1
+51	Pit	 	
+Bye	 
+52	Bye	 	
+Pyra/Mythra	 
+53	Diddy Kong	 	
+Bye	 
+54	Bye	 	
+Pikachu	 
+55	Yoshi	1	
+Zero Suit Samus	3
+56	Bye	 	
+Ness	 
+57	Terry	 	
+Bye	 
+58	Toon Link	3	
+Ice Climbers	1
+59	Rob	3	
+Cloud	2
+60	Bye	 	
+Bowser	 
+61	Kirby	 	
+Bye	 
+62	Bye	 	
+Dark Samus	 
+63	Shulk	0	
+Mario	3
+64	Bye	 	
+Kazuya	 
+Winners Round 2
+Top 96
+65	Roy	1	
+Min Min	3
+66	Pokemon Trainer	3	
+Lucina	1
+67	Young Link	2	
+Mewtwo	3
+68	Richter	0	
+Banjo & Kazooie	3
+69	Isabelle	0	
+Corrin	3
+70	Palutena	0	
+Daisy	3
+71	Wolf	1	
+Ganondorf	3
+72	Marth	0	
+Zelda	3
+73	Ridley	3	
+Olimar	1
+74	Dr. Mario	3	
+Villager	1
+75	Steve	1	
+Dark Pit	3
+76	Luigi	3	
+Pichu	0
+77	Snake	0	
+Sephiroth	3
+78	Falco	3	
+Chrom	2
+79	King Dedede	3	
+Mii Brawler	0
+80	Greninja	0	
+Byleth	3
+81	Donkey Kong	3	
+Ryu	0
+82	Metaknight	0	
+King K. Rool	3
+83	Joker	0	
+Captain Falcon	3
+84	Pac-Man	0	
+Incineroar	3
+85	Piranha Plant	3	
+Fox	0
+86	Bowser Jr.	1	
+Rosalina & Luma	3
+87	Little Mac	2	
+Link	3
+88	Inkling	2	
+Hero	3
+89	Sans	3	
+Mega Man	2
+90	Pit	1	
+Pyra/Mythra	3
+91	Diddy Kong	3	
+Pikachu	1
+92	Zero Suit Samus	0	
+Ness	3
+93	Terry	3	
+Toon Link	1
+94	Rob	0	
+Bowser	3
+95	Kirby	3	
+Dark Samus	1
+96	Mario	1	
+Kazuya	3
+Winners Round 3
+Top 48
+97	Min Min	3	
+Pokemon Trainer	1
+98	Mewtwo	2	
+Banjo & Kazooie	3
+99	Corrin	2	
+Daisy	3
+100	Ganondorf	3	
+Zelda	1
+101	Ridley	3	
+Dr. Mario	0
+102	Dark Pit	1	
+Luigi	3
+103	Sephiroth	3	
+Falco	2
+104	King Dedede	2	
+Byleth	3
+105	Donkey Kong	3	
+King K. Rool	0
+106	Captain Falcon	0	
+Incineroar	3
+107	Piranha Plant	2	
+Rosalina & Luma	3
+108	Link	3	
+Hero	1
+109	Sans	2	
+Pyra/Mythra	3
+110	Diddy Kong	2	
+Ness	3
+111	Terry	0	
+Bowser	3
+112	Kirby	2	
+Kazuya	3
+Winners Round 4
+Top 24
+113	Min Min	3	
+Banjo & Kazooie	1
+114	Daisy	2	
+Ganondorf	3
+115	Ridley	3	
+Luigi	0
+116	Sephiroth	0	
+Byleth	3
+117	Donkey Kong	3	
+Incineroar	2
+118	Rosalina & Luma	0	
+Link	3
+119	Pyra/Mythra	3	
+Ness	2
+120	Bowser	3	
+Kazuya	0
+Winners Quarter-final
+Top 12
+121	Min Min	2	
+Ganondorf	3
+122	Ridley	2	
+Byleth	3
+123	Donkey Kong	1	
+Link	3
+124	Pyra/Mythra	0	
+Bowser	3
+Winners Semi-final
+Top 6
+125	Ganondorf	0	
+Byleth	3
+126	Link	0	
+Bowser	3
+Winners Final
+Top 3
+127	Byleth	3	
+Bowser	2
+Grand Final (Set 1)
+Top 2
+128	Byleth	3	
+Bowser	2
+Grand Final (Set 2)
+Top 2
+129	Winner of 128	 	
+Loser of 128	 
+Losers Round 1
+Top 128
+130	Bye	 	
+Samus	 
+131	Bye	 	
+Bye	 
+132	Bye	 	
+Wii Fit Trainer	 
+133	Mii Swordfighter	 	
+Bye	 
+134	Bye	 	
+Bayonetta	 
+135	Bye	 	
+Bye	 
+136	Bye	 	
+Bye	 
+137	Sonic	 	
+Bye	 
+138	Bye	 	
+Mr. Game & Watch	 
+139	Bye	 	
+Bye	 
+140	Bye	 	
+Lucas	 
+141	Simon	 	
+Bye	 
+142	Bye	 	
+Peach	 
+143	Ike	 	
+Bye	 
+144	Bye	 	
+Bye	 
+145	Sheik	 	
+Bye	 
+146	Bye	 	
+Jigglypuff	 
+147	Bye	 	
+Bye	 
+148	Bye	 	
+Duck Hunt	 
+149	Wario	 	
+Bye	 
+150	Bye	 	
+Robin	 
+151	Bye	 	
+Bye	 
+152	Bye	 	
+Bye	 
+153	Ken	 	
+Bye	 
+154	Bye	 	
+Lucario	 
+155	Bye	 	
+Bye	 
+156	Bye	 	
+Bye	 
+157	Yoshi	 	
+Bye	 
+158	Bye	 	
+Ice Climbers	 
+159	Cloud	 	
+Bye	 
+160	Bye	 	
+Bye	 
+161	Shulk	 	
+Bye	 
+Losers Round 2
+Top 96
+162	Mario	0	
+Samus	3
+163	Dark Samus	 	
+Bye	 
+164	Rob	3	
+Wii Fit Trainer	2
+165	Toon Link	3	
+Mii Swordfighter	0
+166	Zero Suit Samus	1	
+Bayonetta	3
+167	Pikachu	 	
+Bye	 
+168	Pit	 	
+Bye	 
+169	Mega Man	3	
+Sonic	0
+170	Inkling	3	
+Mr. Game & Watch	1
+171	Little Mac	 	
+Bye	 
+172	Bowser Jr.	3	
+Lucas	1
+173	Fox	3	
+Simon	1
+174	Pac-Man	3	
+Peach	2
+175	Joker	3	
+Ike	2
+176	Metaknight	 	
+Bye	 
+177	Ryu	3	
+Sheik	2
+178	Greninja	0	
+Jigglypuff	3
+179	Mii Brawler	 	
+Bye	 
+180	Chrom	3	
+Duck Hunt	0
+181	Snake	2	
+Wario	3
+182	Pichu	3	
+Robin	1
+183	Steve	 	
+Bye	 
+184	Villager	 	
+Bye	 
+185	Olimar	3	
+Ken	2
+186	Marth	3	
+Lucario	2
+187	Wolf	 	
+Bye	 
+188	Palutena	 	
+Bye	 
+189	Isabelle	3	
+Yoshi	1
+190	Richter	3	
+Ice Climbers	2
+191	Young Link	0	
+Cloud	3
+192	Lucina	 	
+Bye	 
+193	Roy	1	
+Shulk	3
+Losers Round 3
+Top 64
+194	Samus	3	
+Dark Samus	0
+195	Rob	3	
+Toon Link	1
+196	Bayonetta	3	
+Pikachu	2
+197	Pit	1	
+Mega Man	3
+198	Inkling	2	
+Little Mac	3
+199	Bowser Jr.	1	
+Fox	3
+200	Pac-Man	2	
+Joker	3
+201	Metaknight	3	
+Ryu	2
+202	Jigglypuff	2	
+Mii Brawler	3
+203	Chrom	3	
+Wario	1
+204	Pichu	2	
+Steve	3
+205	Villager	1	
+Olimar	3
+206	Marth	3	
+Wolf	0
+207	Palutena	0	
+Isabelle	3
+208	Richter	0	
+Cloud	3
+209	Lucina	1	
+Shulk	3
+Losers Round 4
+Top 48
+210	King Dedede	3	
+Samus	0
+211	Falco	2	
+Rob	3
+212	Dark Pit	3	
+Bayonetta	1
+213	Dr. Mario	3	
+Mega Man	0
+214	Zelda	3	
+Little Mac	0
+215	Corrin	3	
+Fox	0
+216	Mewtwo	0	
+Joker	3
+217	Pokemon Trainer	3	
+Metaknight	0
+218	Kirby	3	
+Mii Brawler	2
+219	Terry	3	
+Chrom	0
+220	Diddy Kong	1	
+Steve	3
+221	Sans	3	
+Olimar	1
+222	Hero	3	
+Marth	0
+223	Piranha Plant	1	
+Isabelle	3
+224	Captain Falcon	1	
+Cloud	3
+225	King K. Rool	3	
+Shulk	0
+Losers Round 5
+Top 32
+226	King Dedede	3	
+Rob	1
+227	Dark Pit	2	
+Dr. Mario	3
+228	Zelda	3	
+Corrin	0
+229	Joker	3	
+Pokemon Trainer	1
+230	Kirby	1	
+Terry	3
+231	Steve	0	
+Sans	3
+232	Hero	3	
+Isabelle	0
+233	Cloud	1	
+King K. Rool	3
+Losers Round 6
+Top 24
+234	Incineroar	3	
+King Dedede	0
+235	Rosalina & Luma	1	
+Dr. Mario	3
+236	Ness	0	
+Zelda	3
+237	Kazuya	3	
+Joker	0
+238	Banjo & Kazooie	3	
+Terry	1
+239	Daisy	2	
+Sans	3
+240	Luigi	0	
+Hero	3
+241	Sephiroth	1	
+King K. Rool	3
+Losers Round 7
+Top 16
+242	Incineroar	3	
+Dr. Mario	0
+243	Zelda	2	
+Kazuya	3
+244	Banjo & Kazooie	3	
+Sans	0
+245	Hero	3	
+King K. Rool	0
+Losers Round 8
+Top 12
+246	Ridley	3	
+Incineroar	1
+247	Min Min	1	
+Kazuya	3
+248	Pyra/Mythra	0	
+Banjo & Kazooie	3
+249	Donkey Kong	3	
+Hero	1
+Losers Round 9
+Top 8
+250	Ridley	1	
+Kazuya	3
+251	Banjo & Kazooie	2	
+Donkey Kong	3
+Losers Round 10
+Top 6
+252	Link	1	
+Kazuya	3
+253	Ganondorf	3	
+Donkey Kong	2
+Losers Round 11
+Top 4
+254	Kazuya	3	
+Ganondorf	2
+Losers Final
+Top 3
+255	Bowser	3	
+Kazuya	0
