@@ -1,0 +1,86 @@
+Winners Round 1
+Top 16
+1	Jigglypuff	 	
+Bye	 
+2	Samus	1	
+Ness	3
+3	Luigi	0	
+Yoshi	3
+4	Bye	 	
+Captain Falcon	 
+5	Fox	 	
+Bye	 
+6	Kirby	2	
+Pikachu	3
+7	Donkey Kong	3	
+Mario	0
+8	Bye	 	
+Link	 
+Winners Quarter-final
+Top 12
+9	Jigglypuff	1	
+Ness	3
+10	Yoshi	1	
+Captain Falcon	3
+11	Fox	1	
+Pikachu	3
+12	Donkey Kong	3	
+Link	1
+Winners Semi-final
+Top 6
+13	Ness	2	
+Captain Falcon	3
+14	Pikachu	1	
+Donkey Kong	3
+Winners Final
+Top 3
+15	Captain Falcon	1	
+Donkey Kong	3
+Grand Final (Set 1)
+Top 2
+16	Donkey Kong	3	
+Link	1
+Grand Final (Set 2)
+Top 2
+17	Winner of 16	 	
+Loser of 16	 
+Losers Round 1
+Top 16
+18	Bye	 	
+Samus	 
+19	Luigi	 	
+Bye	 
+20	Bye	 	
+Kirby	 
+21	Mario	 	
+Bye	 
+Losers Round 2
+Top 12
+22	Link	3	
+Samus	0
+23	Fox	1	
+Luigi	3
+24	Yoshi	2	
+Kirby	3
+25	Jigglypuff	1	
+Mario	3
+Losers Round 3
+Top 8
+26	Link	3	
+Luigi	1
+27	Kirby	2	
+Mario	3
+Losers Round 4
+Top 6
+28	Ness	2	
+Link	3
+29	Pikachu	0	
+Mario	3
+Losers Round 5
+Top 4
+30	Link	3	
+Mario	0
+Losers Final
+Top 3
+31	Captain Falcon	0	
+Link	3

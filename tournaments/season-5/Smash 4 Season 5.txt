@@ -1,0 +1,156 @@
+Winners Round 1
+Top 32
+1	Robin	 	
+Bye	 
+2	Rosalina & Luma	3	
+Shulk	0
+3	Dark Pit	 	
+Bye	 
+4	Bye	 	
+Little Mac	 
+5	Greninja	 	
+Bye	 
+6	Pac-Man	0	
+Ryu	3
+7	Corrin	3	
+Sans	1
+8	Bye	 	
+Lucina	 
+9	Bowser Jr.	 	
+Bye	 
+10	Mega Man	1	
+Villager	3
+11	Cloud	 	
+Bye	 
+12	Bye	 	
+Palutena	 
+13	Mii Brawler	 	
+Bye	 
+14	Bye	 	
+Bayonetta	 
+15	Mii Swordfighter	3	
+Duck Hunt	2
+16	Bye	 	
+Wii Fit Trainer	 
+Winners Round 2
+Top 24
+17	Robin	3	
+Rosalina & Luma	1
+18	Dark Pit	3	
+Little Mac	2
+19	Greninja	0	
+Ryu	3
+20	Corrin	3	
+Lucina	1
+21	Bowser Jr.	3	
+Villager	0
+22	Cloud	3	
+Palutena	0
+23	Mii Brawler	3	
+Bayonetta	1
+24	Mii Swordfighter	3	
+Wii Fit Trainer	1
+Winners Quarter-final
+Top 12
+25	Robin	0	
+Dark Pit	3
+26	Ryu	3	
+Corrin	1
+27	Bowser Jr.	3	
+Cloud	0
+28	Mii Brawler	1	
+Mii Swordfighter	3
+Winners Semi-final
+Top 6
+29	Dark Pit	0	
+Ryu	3
+30	Bowser Jr.	2	
+Mii Swordfighter	3
+Winners Final
+Top 3
+31	Ryu	2	
+Mii Swordfighter	3
+Grand Final (Set 1)
+Top 2
+32	Mii Swordfighter	1	
+Ryu	3
+Grand Final (Set 2)
+Top 2
+33	Ryu	1	
+Mii Swordfighter	3
+Losers Round 1
+Top 32
+34	Bye	 	
+Shulk	 
+35	Bye	 	
+Bye	 
+36	Bye	 	
+Pac-Man	 
+37	Sans	 	
+Bye	 
+38	Bye	 	
+Mega Man	 
+39	Bye	 	
+Bye	 
+40	Bye	 	
+Bye	 
+41	Duck Hunt	 	
+Bye	 
+Losers Round 2
+Top 24
+42	Wii Fit Trainer	3	
+Shulk	0
+43	Bayonetta	 	
+Bye	 
+44	Palutena	3	
+Pac-Man	1
+45	Villager	0	
+Sans	3
+46	Lucina	2	
+Mega Man	3
+47	Greninja	 	
+Bye	 
+48	Little Mac	 	
+Bye	 
+49	Rosalina & Luma	3	
+Duck Hunt	1
+Losers Round 3
+Top 16
+50	Wii Fit Trainer	3	
+Bayonetta	0
+51	Palutena	0	
+Sans	3
+52	Mega Man	3	
+Greninja	2
+53	Little Mac	3	
+Rosalina & Luma	2
+Losers Round 4
+Top 12
+54	Corrin	1	
+Wii Fit Trainer	3
+55	Robin	1	
+Sans	3
+56	Mii Brawler	2	
+Mega Man	3
+57	Cloud	0	
+Little Mac	3
+Losers Round 5
+Top 8
+58	Wii Fit Trainer	3	
+Sans	0
+59	Mega Man	3	
+Little Mac	1
+Losers Round 6
+Top 6
+60	Bowser Jr.	2	
+Wii Fit Trainer	3
+61	Dark Pit	3	
+Mega Man	0
+Losers Round 7
+Top 4
+62	Wii Fit Trainer	1	
+Dark Pit	3
+Losers Final
+Top 3
+63	Ryu	3	
+Dark Pit	1
