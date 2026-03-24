@@ -1,0 +1,60 @@
+Round 1
+1	Corrin	1	
+Sans	0
+2	Greninja	0	
+Cloud	1
+3	Mega Man	1	
+Little Mac	0
+4	Lucina	0	
+Mii Swordfighter	1
+5	Bowser Jr.	1	
+Shulk	0
+10	Mii Swordfighter	1	
+Bowser Jr.	0
+6	Pac-Man	0	
+Robin	1
+7	Wii Fit Trainer	1	
+Bayonetta	0
+11	Robin	1	
+Wii Fit Trainer	0
+8	Palutena	0	
+Corrin	1
+9	Cloud	1	
+Mega Man	0
+12	Corrin	1	
+Cloud	0
+13	Mii Swordfighter	0	
+Robin	1
+14	Corrin	0	
+Robin	1
+16	Lucina	1	
+Shulk	0
+17	Pac-Man	0	
+Bayonetta	1
+15	Greninja	0	
+Little Mac	1
+18	Wii Fit Trainer	0	
+Sans	1
+19	Bowser Jr.	1	
+Little Mac	0
+20	Mega Man	0	
+Lucina	1
+21	Palutena	1	
+Bayonetta	0
+22	Sans	0	
+Bowser Jr.	1
+23	Lucina	1	
+Palutena	0
+25	Mii Swordfighter	0	
+Lucina	1
+24	Cloud	0	
+Bowser Jr.	1
+26	Bowser Jr.	0	
+Lucina	1
+27	Corrin	1	
+Lucina	0
+28	Robin	0	
+Corrin	1
+29	Corrin	1	
+Robin	0
+]
