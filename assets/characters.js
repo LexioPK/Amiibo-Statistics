@@ -7,6 +7,7 @@ import {
   populateSeasonSelect,
   pct,
   consistencyScore,
+  iconPath,
 } from "./lib.js";
 
 const seasonSelect = document.getElementById("seasonSelect");
@@ -97,7 +98,7 @@ function renderStats(roster, perChar) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${r.rank ?? ""}</td>
-      <td class="name-cell">${r.name}</td>
+      <td class="name-cell"><span class="char-name-wrap">${r.name}<img class="char-icon" src="${iconPath(r.name)}" alt="" onerror="this.style.display='none'"></span></td>
       <td>${r.elo}</td>
       <td>${st.matches}</td>
       <td>${st.wins}</td>

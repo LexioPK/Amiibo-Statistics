@@ -12,6 +12,7 @@
         <span class="site-title">🎮 Amiibo Stats</span>
         <nav class="site-nav">
           <a href="./index.html" class="nav-link">Tournaments</a>
+          <a href="./season.html" class="nav-link">Season</a>
           <a href="./characters.html" class="nav-link active">Characters</a>
           <a href="./head-to-head.html" class="nav-link">Head-to-Head</a>
         </nav>
@@ -19,8 +20,8 @@
     </header>
 
     <main class="container">
-      <h1>Character Stats</h1>
-      <p class="muted">Stats aggregated across all tournaments in the selected season.</p>
+      <h1>Characters</h1>
+      <p class="muted">Select a season and character to view their detailed stats.</p>
 
       <div class="controls card">
         <div class="row">
@@ -28,39 +29,17 @@
             Season:
             <select id="seasonSelect"></select>
           </label>
+          <label>
+            Character:
+            <select id="charSelect"></select>
+          </label>
           <span id="status" class="muted"></span>
         </div>
       </div>
 
-      <section class="card">
-        <div id="noDataMsg" class="muted" style="padding:0.5rem 0">
-          No tournament data found for this season yet.
-        </div>
-        <div class="tableWrap">
-          <table id="statsTable">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Character</th>
-                <th>Elo</th>
-                <th>Matches</th>
-                <th>Wins</th>
-                <th>Losses</th>
-                <th>Win %</th>
-                <th>Upsets</th>
-                <th>Upset %</th>
-                <th title="How closely actual win rate matches Elo-expected win rate (higher = more consistent)">Consistency</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <p class="muted hint">
-          Consistency = how closely a character's actual win rate matches their Elo-expected win rate. Higher is better.
-        </p>
-      </section>
+      <div id="charDetail"></div>
     </main>
 
-    <script type="module" src="./assets/characters.js"></script>
+    <script type="module" src="./assets/character-detail.js"></script>
   </body>
 </html>

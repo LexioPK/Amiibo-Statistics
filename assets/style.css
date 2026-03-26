@@ -211,6 +211,106 @@ tr.upset-row td { background: #fef9c3 !important; }
   letter-spacing: 0.01em;
 }
 
+/* ── Character icons ── */
+.char-name-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+.char-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* ── Character Detail Page ── */
+.char-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.char-portrait {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f3f4f6;
+  flex-shrink: 0;
+}
+.char-detail-info {
+  flex: 1 1 200px;
+}
+.char-detail-name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1e3a5f;
+  margin-bottom: 0.2rem;
+}
+.char-detail-rank {
+  margin-bottom: 0.75rem;
+}
+.char-detail-stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.char-stat-block {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  min-width: 90px;
+  text-align: center;
+}
+.char-stat-val {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e3a5f;
+}
+.char-stat-lbl {
+  font-size: 0.72rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.15rem;
+}
+.matchup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+.matchup-row:last-child { border-bottom: none; }
+.matchup-record {
+  font-size: 0.88rem;
+  color: #374151;
+  white-space: nowrap;
+}
+.not-faced-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.not-faced-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .header-inner { gap: 0.75rem; }

@@ -5,6 +5,7 @@ import {
   loadTournamentText,
   computeTournamentResults,
   populateSeasonSelect,
+  iconPath,
 } from "./lib.js";
 
 const seasonSelect = document.getElementById("seasonSelect");
@@ -145,9 +146,9 @@ function renderResults(state) {
       if (m.isUpset) tr.classList.add("upset-row");
       tr.innerHTML = `
         <td>${globalNum}</td>
-        <td class="winner-cell">${m.winner}</td>
+        <td class="winner-cell"><span class="char-name-wrap">${m.winner}<img class="char-icon" src="${iconPath(m.winner)}" alt="" onerror="this.style.display='none'"></span></td>
         <td class="score-cell">${m.winnerScore} – ${m.loserScore}</td>
-        <td>${m.loser}</td>
+        <td><span class="char-name-wrap">${m.loser}<img class="char-icon" src="${iconPath(m.loser)}" alt="" onerror="this.style.display='none'"></span></td>
         <td>${m.isUpset ? "⚡ Upset" : ""}</td>
       `;
       matchesBody.appendChild(tr);

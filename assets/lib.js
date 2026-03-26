@@ -290,7 +290,7 @@ export function computeTournamentResults(text, ctx) {
 
   function ensure(displayName, elo) {
     if (!perChar.has(displayName)) {
-      perChar.set(displayName, { matches: 0, wins: 0, losses: 0, upsets: 0, elo: elo ?? null, expectedWins: 0 });
+      perChar.set(displayName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo: elo ?? null, expectedWins: 0 });
     }
     return perChar.get(displayName);
   }
@@ -368,6 +368,7 @@ export function computeTournamentResults(text, ctx) {
         const threshold = loser.rank <= 10 ? 5 : 10;
         if (winner.rank - loser.rank >= threshold) {
           ensure(winner.name, winner.elo).upsets++;
+          ensure(loser.name, loser.elo).upsetLosses++;
           totalUpsets++;
           isUpset = true;
         }
@@ -422,13 +423,14 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
 
   function mergeChar(name, elo, src) {
     if (!perChar.has(name)) {
-      perChar.set(name, { matches: 0, wins: 0, losses: 0, upsets: 0, elo, expectedWins: 0 });
+      perChar.set(name, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo, expectedWins: 0 });
     }
     const dst = perChar.get(name);
     dst.matches += src.matches;
     dst.wins += src.wins;
     dst.losses += src.losses;
     dst.upsets += src.upsets;
+    dst.upsetLosses += (src.upsetLosses ?? 0);
     dst.expectedWins += src.expectedWins;
   }
 
@@ -482,13 +484,14 @@ export async function loadAllSeasonsData(latestSeason) {
         const elo = ctx.eloByNameKey.get(key) ?? stats.elo;
 
         if (!perChar.has(canonName)) {
-          perChar.set(canonName, { matches: 0, wins: 0, losses: 0, upsets: 0, elo, expectedWins: 0 });
+          perChar.set(canonName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo, expectedWins: 0 });
         }
         const dst = perChar.get(canonName);
         dst.matches += stats.matches;
         dst.wins += stats.wins;
         dst.losses += stats.losses;
         dst.upsets += stats.upsets;
+        dst.upsetLosses += (stats.upsetLosses ?? 0);
         dst.expectedWins += stats.expectedWins;
       }
 
@@ -532,6 +535,16 @@ export function populateSeasonSelect(selectEl, latestSeason) {
     if (s === latestSeason) opt.selected = true;
     selectEl.appendChild(opt);
   }
+}
+
+/** Return the path to a character's stock icon image. */
+export function iconPath(name) {
+  return `./images/icons/${name.toLowerCase().replace(/\s+/g, "")}.jpg`;
+}
+
+/** Return the path to a character's portrait image. */
+export function portraitPath(name) {
+  return `./images/portraits/${name.toLowerCase().replace(/\s+/g, "")}.jpg`;
 }
 
 /** Format a number as a percentage string. */

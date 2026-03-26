@@ -5,6 +5,7 @@ import {
   loadAndAggregateAllTournaments,
   loadAllSeasonsData,
   populateSeasonSelect,
+  iconPath,
 } from "./lib.js";
 
 const seasonSelect = document.getElementById("seasonSelect");
@@ -140,7 +141,7 @@ function renderH2H() {
     <div class="h2h-overview">
       <div class="h2h-side ${aWinClass}">
         <div class="h2h-rank">#${aRoster?.rank ?? "?"}</div>
-        <div class="h2h-name">${aName}</div>
+        <div class="h2h-name"><span class="char-name-wrap">${aName}<img class="char-icon" src="${iconPath(aName)}" alt="" onerror="this.style.display='none'"></span></div>
         <div class="h2h-elo">${aRoster?.elo ?? "?"} Elo</div>
         <div class="h2h-wins-big">${aWins}</div>
         <div class="h2h-wins-label">win${aWins !== 1 ? "s" : ""}</div>
@@ -163,7 +164,7 @@ function renderH2H() {
 
       <div class="h2h-side ${bWinClass}">
         <div class="h2h-rank">#${bRoster?.rank ?? "?"}</div>
-        <div class="h2h-name">${bName}</div>
+        <div class="h2h-name"><span class="char-name-wrap">${bName}<img class="char-icon" src="${iconPath(bName)}" alt="" onerror="this.style.display='none'"></span></div>
         <div class="h2h-elo">${bRoster?.elo ?? "?"} Elo</div>
         <div class="h2h-wins-big">${bWins}</div>
         <div class="h2h-wins-label">win${bWins !== 1 ? "s" : ""}</div>
@@ -208,9 +209,9 @@ function buildMatchList(aName, bName) {
   for (const m of rows) {
     html += `<tr${m.isUpset ? ' class="upset-row"' : ""}>
       <td>${m.tournament}</td>
-      <td class="winner-cell">${m.winner}</td>
+      <td class="winner-cell"><span class="char-name-wrap">${m.winner}<img class="char-icon" src="${iconPath(m.winner)}" alt="" onerror="this.style.display='none'"></span></td>
       <td class="score-cell">${m.winnerScore} – ${m.loserScore}</td>
-      <td>${m.loser}</td>
+      <td><span class="char-name-wrap">${m.loser}<img class="char-icon" src="${iconPath(m.loser)}" alt="" onerror="this.style.display='none'"></span></td>
       <td>${m.isUpset ? "⚡ Upset" : ""}</td>
     </tr>`;
   }
