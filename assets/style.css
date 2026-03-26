@@ -311,6 +311,43 @@ tr.upset-row td { background: #fef9c3 !important; }
   white-space: nowrap;
 }
 
+/* ── Medal stat blocks ── */
+.char-stat-block.medal-gold {
+  background: #fef9c3;
+  border-color: #fbbf24;
+}
+.char-stat-block.medal-silver {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+.char-stat-block.medal-bronze {
+  background: #fff7ed;
+  border-color: #d97706;
+}
+.medal-label {
+  font-size: 0.95em;
+}
+
+/* ── Matchup Highlights card ── */
+.matchup-highlight-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+.matchup-highlight-row:last-child { border-bottom: none; }
+.matchup-highlight-label {
+  min-width: 9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .header-inner { gap: 0.75rem; }

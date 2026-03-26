@@ -81,6 +81,30 @@ function populateCharSelect(roster) {
   if (roster.find((r) => r.name === prev)) charSelect.value = prev;
 }
 
+// ── Medal helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Returns 1, 2, or 3 if charName is in the top-3 for the given stat
+ * (higher = better), or null otherwise. Ties are treated inclusively
+ * (e.g. if two chars share the top score, both get rank 1).
+ */
+function getStatRank(charName, stat, perChar) {
+  const val = perChar.get(charName)?.[stat] ?? 0;
+  if (!val) return null;
+  let above = 0;
+  for (const [name, s] of perChar) {
+    if (name !== charName && (s[stat] ?? 0) > val) above++;
+  }
+  return above < 3 ? above + 1 : null;
+}
+
+function medalClass(rank) {
+  if (rank === 1) return " medal-gold";
+  if (rank === 2) return " medal-silver";
+  if (rank === 3) return " medal-bronze";
+  return "";
+}
+
 // ── Build per-opponent matchup data from h2h map ──────────────────────────────
 
 function buildOpponentStats(charName, h2hMap) {
@@ -121,11 +145,17 @@ function renderCharDetail() {
     ? opponents.reduce((best, o) => (o.total > best.total ? o : best))
     : null;
 
-  // Best and worst win-rate opponents (must have at least 1 match)
-  const faced = opponents.filter((o) => o.total > 0);
+  // Best and worst win-rate opponents — require a minimum number of matches.
+  // Season view: ≥3 matchups; All-time view: ≥5 matchups.
+  const minMatchups = isAllTime ? 5 : 3;
+  const faced = opponents.filter((o) => o.total >= minMatchups);
   const byWinRate = [...faced].sort((a, b) => (b.charWins / b.total) - (a.charWins / a.total));
   const bestWR = byWinRate[0] ?? null;
   const worstWR = byWinRate[byWinRate.length - 1] ?? null;
+
+  // Medal ranks for wins and upsets across all characters
+  const winsRank = getStatRank(charName, "wins", currentAgg.perChar);
+  const upsetsRank = getStatRank(charName, "upsets", currentAgg.perChar);
 
   // Players not yet faced
   const facedNames = new Set(opponents.map((o) => o.opponent));
@@ -142,8 +172,8 @@ function renderCharDetail() {
             <div class="char-stat-val">${winRate}</div>
             <div class="char-stat-lbl">Win Rate</div>
           </div>
-          <div class="char-stat-block">
-            <div class="char-stat-val">${stats.wins}</div>
+          <div class="char-stat-block${medalClass(winsRank)}">
+            <div class="char-stat-val">${stats.wins}${winsRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][winsRank-1]}</span>` : ""}</div>
             <div class="char-stat-lbl">Wins</div>
           </div>
           <div class="char-stat-block">
@@ -154,8 +184,8 @@ function renderCharDetail() {
             <div class="char-stat-val">${stats.matches}</div>
             <div class="char-stat-lbl">Matches</div>
           </div>
-          <div class="char-stat-block">
-            <div class="char-stat-val">${stats.upsets}</div>
+          <div class="char-stat-block${medalClass(upsetsRank)}">
+            <div class="char-stat-val">${stats.upsets}${upsetsRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][upsetsRank-1]}</span>` : ""}</div>
             <div class="char-stat-lbl">Upsets Pulled</div>
           </div>
           <div class="char-stat-block">
@@ -166,30 +196,48 @@ function renderCharDetail() {
       </div>
     </div>
 
-    ${buildMatchupCard("Most Played Opponent", mostPlayed ? [mostPlayed] : [], charName)}
-    ${buildMatchupCard("Best Win Rate vs.", bestWR ? [bestWR] : [], charName)}
-    ${buildMatchupCard("Worst Win Rate vs.", worstWR ? [worstWR] : [], charName)}
+    ${buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups)}
     ${buildNotFacedCard(notFaced)}
   `;
 }
 
-function buildMatchupCard(title, entries, charName) {
-  if (entries.length === 0) {
-    return `<div class="card"><h2>${title}</h2><p class="muted">No data available.</p></div>`;
-  }
-  const rows = entries.map((o) => {
+function buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups) {
+  function matchupRow(label, o) {
+    if (!o) {
+      return `
+        <div class="matchup-highlight-row">
+          <span class="matchup-highlight-label">${label}</span>
+          <span class="muted">No opponents with ${minMatchups}+ matches.</span>
+        </div>`;
+    }
     const wr = pct(o.charWins, o.total);
     return `
-      <div class="matchup-row">
+      <div class="matchup-highlight-row">
+        <span class="matchup-highlight-label">${label}</span>
         <span class="char-name-wrap">
-          ${o.opponent}
           <img class="char-icon" src="${iconPath(o.opponent)}" alt="" onerror="this.style.display='none'">
+          ${o.opponent}
         </span>
         <span class="matchup-record">${o.charWins}–${o.oppWins} (${wr}) · ${o.total} match${o.total !== 1 ? "es" : ""}</span>
-      </div>
-    `;
-  }).join("");
-  return `<div class="card"><h2>${title}</h2>${rows}</div>`;
+      </div>`;
+  }
+
+  const hasMostPlayed = !!mostPlayed;
+  const hasBest = !!bestWR;
+  const hasWorst = !!worstWR;
+  const noData = !hasMostPlayed && !hasBest && !hasWorst;
+
+  if (noData) {
+    return `<div class="card"><h2>Matchup Highlights</h2><p class="muted">No matchup data available.</p></div>`;
+  }
+
+  return `
+    <div class="card">
+      <h2>Matchup Highlights</h2>
+      ${matchupRow("Most Played", mostPlayed)}
+      ${matchupRow(`Best Win Rate <span class="muted" style="font-weight:400;font-size:0.8em;">(min ${minMatchups} matches)</span>`, bestWR)}
+      ${matchupRow(`Worst Win Rate <span class="muted" style="font-weight:400;font-size:0.8em;">(min ${minMatchups} matches)</span>`, worstWR)}
+    </div>`;
 }
 
 function buildNotFacedCard(notFaced) {
