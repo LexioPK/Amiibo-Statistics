@@ -556,14 +556,19 @@ export function populateSeasonSelect(selectEl, latestSeason) {
   }
 }
 
+/** Normalise a character name into the filename stem used by image assets. */
+function imageSlug(name) {
+  return name.replace(/\s+/g, "").replace(/\//g, "");
+}
+
 /** Return the path to a character's stock icon image. */
 export function iconPath(name) {
-  return `./images/icons/${name.replace(/\s+/g, "")}.png`;
+  return `./images/icons/${imageSlug(name)}.png`;
 }
 
 /** Return the path to a character's portrait image. */
 export function portraitPath(name) {
-  return `./images/portraits/${name.replace(/\s+/g, "")}.png`;
+  return `./images/portraits/${imageSlug(name)}.png`;
 }
 
 /** Format a number as a percentage string. */
