@@ -558,12 +558,12 @@ export function populateSeasonSelect(selectEl, latestSeason) {
 
 /** Return the path to a character's stock icon image. */
 export function iconPath(name) {
-  return `./images/icons/${name.toLowerCase().replace(/\s+/g, "")}.png`;
+  return `./images/icons/${name.replace(/\s+/g, "")}.png`;
 }
 
 /** Return the path to a character's portrait image. */
 export function portraitPath(name) {
-  return `./images/portraits/${name.toLowerCase().replace(/\s+/g, "")}.png`;
+  return `./images/portraits/${name.replace(/\s+/g, "")}.png`;
 }
 
 /** Format a number as a percentage string. */
