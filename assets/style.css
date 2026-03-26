@@ -381,9 +381,9 @@ tr.upset-row td { background: #fef9c3 !important; }
   transform: translateY(-2px);
 }
 .char-card-portrait {
-  width: 88px;
-  height: 88px;
-  object-fit: cover;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
   border-radius: 8px;
   background: #f3f4f6;
 }
