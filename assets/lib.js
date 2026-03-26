@@ -224,8 +224,8 @@ export function parseTournamentSections(rawText) {
  *
  * Grand Finals Set 2 (topN 2)    → [2, 0, -2]  — first (higher set # sorts first)
  * Grand Finals Set 1 (topN 2)    → [2, 0, -1]  — second
- * Winners bracket sections       → [topN, 0, 0]
- * Losers bracket sections        → [topN, 1, 0] — below matching winners
+ * Losers bracket sections        → [topN, 0, 0] — above matching winners
+ * Winners bracket sections       → [topN, 1, 0]
  * Qualifier pools ("Round N")    → [99990 + N, 0, 0]
  * Unnamed qualifiers             → [99999, 0, 0] — last
  */
@@ -244,7 +244,7 @@ export function sectionSortKey(section) {
   // When multiple Grand Finals sets exist (Set 1, Set 2…), display higher sets first.
   const setM = section.name.match(/\bSet\s+(\d+)/i);
   const setOrder = setM ? -parseInt(setM[1], 10) : 0;
-  return [topN, isLosers ? 1 : 0, setOrder];
+  return [topN, isLosers ? 0 : 1, setOrder];
 }
 
 // ── Competitor-line parsing ───────────────────────────────────────────────────
