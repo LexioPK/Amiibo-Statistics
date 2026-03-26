@@ -14,6 +14,22 @@ export function isByeLine(line) {
   return canonKey(line) === "bye";
 }
 
+/**
+ * Hardcoded name aliases: maps the canonical key of an alternate spelling to
+ * the preferred display name that appears in the season roster CSVs.
+ * Used to merge results from tournament files that use different spellings.
+ */
+const HARDCODED_ALIASES = new Map([
+  ["metaknight", "Meta Knight"],
+  ["sans", "Mii Gunner"],
+]);
+
+/** If nameRaw is a known alternate spelling, return the preferred name; otherwise return nameRaw unchanged. */
+function resolveAlias(nameRaw) {
+  const key = canonKey(nameRaw);
+  return HARDCODED_ALIASES.get(key) ?? nameRaw;
+}
+
 export function parseCsvLoose(line) {
   const out = [];
   let cur = "";
@@ -255,8 +271,10 @@ export function parseCompetitorLine(line) {
 
   const nameRaw = norm(parts.join(" ").replace(/\[\d+\]/g, ""));
 
-  // Treat placeholder lines like "Winner of 128" / "Loser of 128" as byes
-  if (/^(Winner|Loser)\s+of\s+\d+$/i.test(nameRaw)) {
+  // Treat placeholder lines like "Winner of 128" / "Loser of 128" as byes.
+  // Note: the trailing number is already stripped as `score` above, so match
+  // with or without a trailing digit.
+  if (/^(Winner|Loser)\s+of(\s+\d+)?$/i.test(nameRaw)) {
     return { nameRaw: "Bye", score: null, bye: true };
   }
 
@@ -296,18 +314,19 @@ export function computeTournamentResults(text, ctx) {
   }
 
   function toDisplay(nameRaw) {
-    const key = canonKey(nameRaw);
+    const resolved = resolveAlias(nameRaw);
+    const key = canonKey(resolved);
     const display = ctx.displayByNameKey.get(key);
-    if (!display) { unknownNames.add(nameRaw); return norm(nameRaw); }
+    if (!display) { unknownNames.add(nameRaw); return norm(resolved); }
     return display;
   }
 
   function eloFor(nameRaw) {
-    return ctx.eloByNameKey.get(canonKey(nameRaw)) ?? null;
+    return ctx.eloByNameKey.get(canonKey(resolveAlias(nameRaw))) ?? null;
   }
 
   function rankFor(nameRaw) {
-    return ctx.rankByNameKey?.get(canonKey(nameRaw)) ?? null;
+    return ctx.rankByNameKey?.get(canonKey(resolveAlias(nameRaw))) ?? null;
   }
 
   const processedSections = [];
