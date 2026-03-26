@@ -22,6 +22,12 @@ export function isByeLine(line) {
 const HARDCODED_ALIASES = new Map([
   ["metaknight", "Meta Knight"],
   ["sans", "Mii Gunner"],
+  ["megaman", "Mega Man"],
+  ["wii-fit trainer", "Wii Fit Trainer"],
+  ["pokémon trainer", "Pokemon Trainer"],
+  ["doctor mario", "Dr. Mario"],
+  ["captian falcon", "Captain Falcon"],
+  ["shiek", "Sheik"],
 ]);
 
 /** If nameRaw is a known alternate spelling, return the preferred name; otherwise return nameRaw unchanged. */
