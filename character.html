@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Amiibo Stats — Characters</title>
+    <title>Amiibo Stats — Character</title>
     <link rel="stylesheet" href="./assets/style.css" />
   </head>
   <body>
@@ -13,20 +13,32 @@
         <nav class="site-nav">
           <a href="./index.html" class="nav-link">Tournaments</a>
           <a href="./season.html" class="nav-link">Season</a>
-          <a href="./characters.html" class="nav-link active">Characters</a>
+          <a href="./characters.html" class="nav-link">Characters</a>
           <a href="./head-to-head.html" class="nav-link">Head-to-Head</a>
         </nav>
       </div>
     </header>
 
     <main class="container">
-      <h1>Characters</h1>
-      <p class="muted">All-time ranking order — click a character to view their detailed stats.</p>
+      <a href="./characters.html" class="back-link">← All Characters</a>
 
-      <p id="galleryStatus" class="muted"></p>
-      <div id="charGallery" class="char-gallery"></div>
+      <div class="controls card">
+        <div class="row">
+          <label>
+            Season:
+            <select id="seasonSelect"></select>
+          </label>
+          <label id="charSelectLabel">
+            Character:
+            <select id="charSelect"></select>
+          </label>
+          <span id="status" class="muted"></span>
+        </div>
+      </div>
+
+      <div id="charDetail"></div>
     </main>
 
-    <script type="module" src="./assets/characters-gallery.js"></script>
+    <script type="module" src="./assets/character-detail.js"></script>
   </body>
 </html>

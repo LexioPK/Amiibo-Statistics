@@ -15,7 +15,14 @@ const charSelect = document.getElementById("charSelect");
 const charDetail = document.getElementById("charDetail");
 const statusEl = document.getElementById("status");
 
+// If a character name is provided in the URL (?char=NAME), use it as the fixed character.
+const urlChar = new URLSearchParams(window.location.search).get("char") ?? null;
+
+// Hide the character selector when navigating from the gallery (char is fixed by URL)
+if (urlChar && charSelect) charSelect.closest("label")?.remove();
+
 populateSeasonSelect(seasonSelect, SEASON_COUNT);
+seasonSelect.value = "alltime";
 
 let currentCtx = null;
 let currentAgg = null;
@@ -62,7 +69,8 @@ async function loadAllTime() {
 // ── Populate character select ─────────────────────────────────────────────────
 
 function populateCharSelect(roster) {
-  const prev = charSelect.value;
+  if (!charSelect) return;
+  const prev = urlChar ?? charSelect.value;
   charSelect.innerHTML = "";
   for (const r of roster) {
     const opt = document.createElement("option");
@@ -94,7 +102,7 @@ function buildOpponentStats(charName, h2hMap) {
 function renderCharDetail() {
   if (!currentCtx || !currentAgg) return;
 
-  const charName = charSelect.value;
+  const charName = (charSelect ? charSelect.value : null) ?? urlChar;
   if (!charName) {
     charDetail.innerHTML = "<p class='muted'>Select a character above.</p>";
     return;
@@ -205,6 +213,6 @@ seasonSelect.addEventListener("change", () => {
   else loadSeason(Number(val));
 });
 
-charSelect.addEventListener("change", renderCharDetail);
+if (charSelect) charSelect.addEventListener("change", renderCharDetail);
 
-loadSeason(SEASON_COUNT);
+loadAllTime();

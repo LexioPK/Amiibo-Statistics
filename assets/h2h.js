@@ -15,6 +15,7 @@ const h2hResult = document.getElementById("h2hResult");
 const statusEl = document.getElementById("status");
 
 populateSeasonSelect(seasonSelect, SEASON_COUNT);
+seasonSelect.value = "alltime";
 
 let currentCtx = null;
 let currentAgg = null;
@@ -230,4 +231,4 @@ seasonSelect.addEventListener("change", () => {
 charASelect.addEventListener("change", renderH2H);
 charBSelect.addEventListener("change", renderH2H);
 
-loadSeason(SEASON_COUNT);
+loadSeasonAllTime();

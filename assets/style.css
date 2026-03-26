@@ -318,3 +318,67 @@ tr.upset-row td { background: #fef9c3 !important; }
   .nav-link { padding: 0.35rem 0.55rem; font-size: 0.82rem; }
   .h2h-center { flex: 1 1 100%; order: -1; }
 }
+
+/* ── Character gallery ── */
+.char-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.char-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem 0.5rem 0.6rem;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+.char-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+  transform: translateY(-2px);
+}
+.char-card-portrait {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+.char-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.5rem;
+  gap: 0.1rem;
+}
+.char-card-rank {
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.char-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ── Back link ── */
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+.back-link:hover { text-decoration: underline; }
