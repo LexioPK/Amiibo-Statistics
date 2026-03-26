@@ -568,7 +568,7 @@ export function iconPath(name) {
 
 /** Return the path to a character's portrait image. */
 export function portraitPath(name) {
-  return `./images/portraits/${imageSlug(name)}.png`;
+  return `./images/portraits/${imageSlug(name).toLowerCase()}.png`;
 }
 
 /** Format a number as a percentage string. */
