@@ -1,0 +1,56 @@
+Round 1
+1	Dr. Mario	0	
+Bowser	1
+2	Roy	1	
+Peach	0
+3	Falco	0	
+Marth	1
+5	Mewtwo	1	
+Mr. Game & Watch	0
+4	Pichu	0	
+Shiek	1
+6	Ice Climbers	0	
+Zelda	1
+10	Mewtwo	0	
+Zelda	1
+9	Ganondorf	1	
+Shiek	0
+8	Roy	0	
+Marth	1
+7	Young Link	0	
+Bowser	1
+11	Bowser	1	
+Marth	0
+12	Ganondorf	0	
+Zelda	1
+13	Bowser	1	
+Zelda	0
+15	Mr. Game & Watch	0	
+Ice Climbers	1
+14	Peach	0	
+Falco	1
+16	Mewtwo	0	
+Dr. Mario	1
+18	Roy	0	
+Pichu	1
+19	Young Link	1	
+Ice Climbers	0
+17	Shiek	1	
+Falco	0
+20	Dr. Mario	1	
+Shiek	0
+21	Pichu	1	
+Young Link	0
+23	Ganondorf	1	
+Pichu	0
+22	Marth	0	
+Dr. Mario	1
+24	Dr. Mario	0	
+Ganondorf	1
+25	Zelda	0	
+Ganondorf	1
+26	Bowser	0	
+Ganondorf	1
+27	Ganondorf	0	
+Bowser	1
+

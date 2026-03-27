@@ -1,0 +1,45 @@
+Round 1
+1	Luigi	0	
+Yoshi	1
+2	Jigglypuff	1	
+Captain Falcon	0
+3	Kirby	0	
+Samus	1
+4	Fox	1	
+Pikachu	0
+5	Mario	0	
+Yoshi	1
+6	Link	1	
+Jigglypuff	0
+7	Donkey Kong	1	
+Samus	0
+8	Ness	1	
+Fox	0
+9	Yoshi	1	
+Link	0
+10	Donkey Kong	1	
+Ness	0
+12	Fox	0	
+Luigi	1
+13	Samus	0	
+Captain Falcon	1
+14	Jigglypuff	0	
+Kirby	1
+15	Mario	0	
+Pikachu	1
+16	Luigi	0	
+Captain Falcon	1
+17	Kirby	0	
+Pikachu	1
+18	Link	0	
+Captain Falcon	1
+19	Ness	1	
+Pikachu	0
+11	Yoshi	0	
+Donkey Kong	1
+20	Captain Falcon	0	
+Ness	1
+21	Yoshi	1	
+Ness	0
+22	Donkey Kong	1	
+Yoshi	0

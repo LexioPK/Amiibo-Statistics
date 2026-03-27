@@ -1,0 +1,39 @@
+Round 1
+1	Ken	1	
+Simon	0
+2	Piranha Plant	1	
+King K. Rool	0
+3	Chrom	1	
+Ken	0
+6	Isabelle	0	
+Inkling	1
+4	Ridley	1	
+Incineroar	0
+5	Daisy	0	
+Piranha Plant	1
+8	Piranha Plant	1	
+Inkling	0
+7	Chrom	0	
+Ridley	1
+9	Ridley	1	
+Piranha Plant	0
+10	Isabelle	1	
+Simon	0
+11	Incineroar	0	
+King K. Rool	1
+13	Ken	0	
+King K. Rool	1
+12	Daisy	0	
+Isabelle	1
+14	Chrom	0	
+Isabelle	1
+15	Inkling	1	
+King K. Rool	0
+16	Isabelle	1	
+Inkling	0
+17	Piranha Plant	1	
+Isabelle	0
+18	Ridley	0	
+Piranha Plant	1
+19	Piranha Plant	1	
+Ridley	0

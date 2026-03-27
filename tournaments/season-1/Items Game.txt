@@ -1,0 +1,237 @@
+Round 1
+1	Diddy Kong	2	
+Meta Knight	3
+2	Ridley	13	
+Sheik	12
+3	Jigglypuff	12	
+Pikachu	13
+4	Lucina	12	
+Peach	14
+5	Shulk	4	
+Snake	10
+6	Marth	12	
+Pac-Man	11
+7	Doctor Mario	10	
+Bowser	7
+8	Ness	14	
+Ken	11
+9	Daisy	7	
+Kirby	10
+10	Wolf	10	
+Cloud	8
+11	Yoshi	12	
+Lucario	14
+12	Mario	10	
+Mewtwo	7
+13	Donkey Kong	14	
+Link	11
+14	Piranha Plant	8	
+Lucas	5
+15	Fox	8	
+Sans	5
+16	Young Link	5	
+Palutena	8
+17	Zelda	8	
+Zero Suit Samus	5
+18	Olimar	8	
+Mr. Game & Watch	5
+19	Captain Falcon	8	
+Samus	5
+20	Luigi	8	
+Ice Climbers	6
+21	Pichu	8	
+Bayonetta	4
+22	Robin	6	
+Little Mac	8
+23	Pit	3	
+Ganondorf	8
+24	Ike	5	
+Falco	8
+25	Corrin	8	
+Sonic	4
+26	King Dedede	8	
+King K. Rool	11
+27	Inkling	1	
+Villager	0
+28	Megaman	11	
+Pokemon Trainer	8
+71	Villager	0	
+Pokemon Trainer	1
+29	Incineroar	11	
+Meta Knight	9
+31	Peach	10	
+Snake	11
+30	Ridley	9	
+Pikachu	5
+32	Marth	9	
+Doctor Mario	6
+33	Wii Fit Trainer	4	
+Ness	8
+34	Kirby	8	
+Wolf	11
+35	Lucario	11	
+Mario	8
+36	Donkey Kong	9	
+Piranha Plant	10
+37	Roy	8	
+Fox	5
+38	Palutena	6	
+Zelda	8
+39	Olimar	4	
+Captain Falcon	7
+40	Luigi	8	
+Pichu	5
+41	Greninja	9	
+Little Mac	5
+42	Ganondorf	9	
+Falco	4
+43	Corrin	11	
+King K. Rool	10
+44	Inkling	10	
+Megaman	9
+60	Sheik	4	
+Jigglypuff	8
+61	Lucina	5	
+Shulk	9
+62	Pac-Man	4	
+Bowser	8
+63	Daisy	5	
+Cloud	8
+64	Yoshi	8	
+Mewtwo	10
+65	Link	5	
+Lucas	8
+66	Young Link	8	
+Zero Suit Samus	12
+68	Ice Climbers	9	
+Bayonetta	9
+69	Pit	10	
+Ike	8
+70	Sonic	11	
+King Dedede	10
+67	Mr. Game & Watch	6	
+Samus	8
+45	Incineroar	11	
+Ridley	10
+46	Snake	8	
+Marth	5
+47	Ness	11	
+Wolf	9
+48	Lucario	11	
+Piranha Plant	11
+49	Roy	5	
+Zelda	8
+50	Captain Falcon	8	
+Luigi	5
+51	Greninja	5	
+Ganondorf	8
+52	Corrin	8	
+Inkling	5
+54	Ness	11	
+Lucario	9
+55	Zelda	8	
+Captain Falcon	5
+56	Ganondorf	8	
+Corrin	6
+58	Zelda	8	
+Ganondorf	6
+53	Incineroar	8	
+Snake	6
+57	Incineroar	11	
+Ness	9
+59	Incineroar	11	
+Zelda	9
+72	Megaman	8	
+Diddy Kong	11
+73	King K. Rool	11	
+Jigglypuff	10
+74	Falco	2	
+Shulk	8
+75	Little Mac	8	
+Bowser	11
+76	Pichu	6	
+Ken	8
+77	Olimar	4	
+Cloud	8
+78	Palutena	8	
+Mewtwo	10
+79	Fox	3	
+Lucas	8
+80	Donkey Kong	9	
+Sans	11
+81	Mario	3	
+Zero Suit Samus	8
+82	Kirby	11	
+Samus	8
+83	Wii Fit Trainer	5	
+Ice Climbers	8
+84	Doctor Mario	11	
+Robin	8
+85	Peach	4	
+Pit	8
+86	Pikachu	8	
+Sonic	6
+87	Meta Knight	6	
+Pokemon Trainer	8
+95	Pikachu	4	
+Pokemon Trainer	8
+94	Doctor Mario	4	
+Pit	8
+93	Kirby	10	
+Ice Climbers	8
+92	Sans	6	
+Zero Suit Samus	9
+91	Mewtwo	10	
+Lucas	10
+90	Ken	7	
+Cloud	10
+89	Shulk	10	
+Bowser	9
+88	Diddy Kong	4	
+King K. Rool	8
+97	Wolf	5	
+Shulk	8
+98	Marth	4	
+Cloud	8
+99	Ridley	10	
+Mewtwo	10
+100	Inkling	9	
+Zero Suit Samus	12
+101	Greninja	8	
+Kirby	3
+96	Piranha Plant	5	
+King K. Rool	8
+102	Luigi	10	
+Pit	12
+103	Roy	5	
+Pokemon Trainer	8
+107	Pit	8	
+Pokemon Trainer	6
+106	Zero Suit Samus	8	
+Greninja	5
+105	Cloud	8	
+Mewtwo	5
+104	King K. Rool	4	
+Shulk	8
+108	Captain Falcon	10	
+Shulk	8
+109	Corrin	10	
+Cloud	10
+110	Snake	8	
+Zero Suit Samus	5
+111	Lucario	8	
+Pit	6
+112	Captain Falcon	4	
+Cloud	8
+113	Snake	3	
+Lucario	7
+114	Ness	11	
+Cloud	9
+115	Ganondorf	8	
+Lucario	5
+116	Ness	5	
+Ganondorf	8
+117	Zelda	9	
+Ganondorf	10
+118	Incineroar	8	
+Ganondorf	3
