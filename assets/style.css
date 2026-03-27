@@ -393,8 +393,14 @@ tr.upset-row td { background: #fef9c3 !important; }
   flex: 1 1 0;
   min-width: 0;
 }
+/* Placements card stays compact so Matchup Highlights gets the bulk of the space */
+.card-row > .placements-card {
+  flex: 0 0 auto;
+  width: 155px;
+}
 @media (max-width: 700px) {
   .card-row { flex-direction: column; }
+  .card-row > .placements-card { width: 100%; }
 }
 
 /* ── Character gallery ── */

@@ -162,7 +162,7 @@ function buildPlacementsCard(tournamentResults, charName) {
   }
 
   if (counts.size === 0) {
-    return `<div class="card"><h2>Placements</h2><p class="muted">No placement data available.</p></div>`;
+    return `<div class="card placements-card"><h2>Placements</h2><p class="muted">No placement data available.</p></div>`;
   }
 
   const rows = PLACEMENT_BUCKETS
@@ -174,7 +174,7 @@ function buildPlacementsCard(tournamentResults, charName) {
       </div>`)
     .join("");
 
-  return `<div class="card"><h2>Placements</h2><div class="placement-list">${rows}</div></div>`;
+  return `<div class="card placements-card"><h2>Placements</h2><div class="placement-list">${rows}</div></div>`;
 }
 
 /**
@@ -188,6 +188,18 @@ function getStatRank(charName, stat, perChar) {
   let above = 0;
   for (const [name, s] of perChar) {
     if (name !== charName && (s[stat] ?? 0) > val) above++;
+  }
+  return above < 3 ? above + 1 : null;
+}
+
+/** Win-rate rank (requires at least 1 match). */
+function getWinRateRank(charName, perChar) {
+  const entry = perChar.get(charName);
+  if (!entry || !entry.matches) return null;
+  const val = entry.wins / entry.matches;
+  let above = 0;
+  for (const [name, s] of perChar) {
+    if (name !== charName && s.matches > 0 && (s.wins / s.matches) > val) above++;
   }
   return above < 3 ? above + 1 : null;
 }
@@ -248,8 +260,10 @@ function renderCharDetail() {
   const worstWR = byWinRate[byWinRate.length - 1] ?? null;
 
   // Medal ranks for wins and upsets across all characters
-  const winsRank = getStatRank(charName, "wins", currentAgg.perChar);
-  const upsetsRank = getStatRank(charName, "upsets", currentAgg.perChar);
+  const winsRank    = getStatRank(charName, "wins", currentAgg.perChar);
+  const upsetsRank  = getStatRank(charName, "upsets", currentAgg.perChar);
+  const matchesRank = getStatRank(charName, "matches", currentAgg.perChar);
+  const winRateRank = getWinRateRank(charName, currentAgg.perChar);
 
   // Players not yet faced
   const facedNames = new Set(opponents.map((o) => o.opponent));
@@ -262,8 +276,8 @@ function renderCharDetail() {
         <div class="char-detail-name">${charName}</div>
         <div class="char-detail-rank muted">${rosterEntry ? `Rank #${rosterEntry.rank ?? "?"} · ${rosterEntry.elo} Elo` : ""}</div>
         <div class="char-detail-stats-grid">
-          <div class="char-stat-block">
-            <div class="char-stat-val">${winRate}</div>
+          <div class="char-stat-block${medalClass(winRateRank)}">
+            <div class="char-stat-val">${winRate}${winRateRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][winRateRank-1]}</span>` : ""}</div>
             <div class="char-stat-lbl">Win Rate</div>
           </div>
           <div class="char-stat-block${medalClass(winsRank)}">
@@ -274,8 +288,8 @@ function renderCharDetail() {
             <div class="char-stat-val">${stats.losses}</div>
             <div class="char-stat-lbl">Losses</div>
           </div>
-          <div class="char-stat-block">
-            <div class="char-stat-val">${stats.matches}</div>
+          <div class="char-stat-block${medalClass(matchesRank)}">
+            <div class="char-stat-val">${stats.matches}${matchesRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][matchesRank-1]}</span>` : ""}</div>
             <div class="char-stat-lbl">Matches</div>
           </div>
           <div class="char-stat-block${medalClass(upsetsRank)}">
