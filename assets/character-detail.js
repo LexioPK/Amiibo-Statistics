@@ -290,8 +290,10 @@ function renderCharDetail() {
       </div>
     </div>
 
-    ${buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups)}
-    ${buildPlacementsCard(currentAgg.tournamentResults, charName)}
+    <div class="card-row">
+      ${buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups)}
+      ${buildPlacementsCard(currentAgg.tournamentResults, charName)}
+    </div>
     ${buildNotFacedCard(notFaced)}
   `;
 }

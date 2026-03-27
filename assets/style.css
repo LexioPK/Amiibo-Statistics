@@ -383,6 +383,20 @@ tr.upset-row td { background: #fef9c3 !important; }
   .h2h-center { flex: 1 1 100%; order: -1; }
 }
 
+/* ── Side-by-side card row ── */
+.card-row {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+.card-row > .card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  .card-row { flex-direction: column; }
+}
+
 /* ── Character gallery ── */
 .char-gallery {
   display: grid;
