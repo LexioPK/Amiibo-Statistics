@@ -83,6 +83,100 @@ function populateCharSelect(roster) {
 
 // ── Medal helpers ─────────────────────────────────────────────────────────────
 
+// ── Placement helpers ─────────────────────────────────────────────────────────
+
+const PLACEMENT_BUCKETS = [
+  { label: "1st 🥇", max: 1 },
+  { label: "2nd 🥈", max: 2 },
+  { label: "3rd 🥉", max: 3 },
+  { label: "Top 8",  max: 8 },
+  { label: "Top 16", max: 16 },
+  { label: "Top 24", max: 24 },
+  { label: "Top 32", max: 32 },
+  { label: "Top 64", max: 64 },
+  { label: "Top 96", max: 96 },
+];
+
+function placementBucket(topN) {
+  for (const b of PLACEMENT_BUCKETS) {
+    if (topN <= b.max) return b.label;
+  }
+  return null;
+}
+
+/**
+ * Derives a character's final placement in one tournament from its processed
+ * sections.  Placement is determined by:
+ *   1st / 2nd  — Grand Finals result (Set 2 takes priority over Set 1 when
+ *                both have a recorded result; Set 1 is used when Set 2 is
+ *                absent or has no scored matches).
+ *   3rd–Top N  — The losers-bracket section with the lowest topN where the
+ *                character appears as the loser (i.e., the round that
+ *                eliminated them).
+ * Returns the numeric placement (1, 2, or the section's topN), or null when
+ * not enough data exists (e.g. round-robin pools without topN values).
+ */
+function derivePlacement(sections, charName) {
+  const isGF   = (s) => /grand\s*final/i.test(s.name);
+  const isSet2 = (s) => /set\s*2/i.test(s.name);
+  const isSet1 = (s) => /set\s*1/i.test(s.name);
+
+  const gfSections = sections.filter(isGF);
+  // Prioritise Set 2 (bracket reset), then Set 1, then any other GF label
+  const gfOrdered = [
+    ...gfSections.filter(isSet2),
+    ...gfSections.filter(isSet1),
+    ...gfSections.filter((s) => !isSet1(s) && !isSet2(s)),
+  ];
+
+  for (const s of gfOrdered) {
+    for (const m of s.matches) {
+      if (m.winner === charName) return 1;
+      if (m.loser  === charName) return 2;
+    }
+  }
+
+  // Losers-bracket sections sorted best-placement first (lowest topN first)
+  const losersSecs = sections
+    .filter((s) => /^losers/i.test(s.name) && s.topN != null)
+    .sort((a, b) => a.topN - b.topN);
+
+  for (const s of losersSecs) {
+    for (const m of s.matches) {
+      if (m.loser === charName) return s.topN;
+    }
+  }
+
+  return null;
+}
+
+function buildPlacementsCard(tournamentResults, charName) {
+  const counts = new Map();
+
+  for (const { result } of tournamentResults) {
+    const placement = derivePlacement(result.sections, charName);
+    if (placement == null) continue;
+    const bucket = placementBucket(placement);
+    if (!bucket) continue;
+    counts.set(bucket, (counts.get(bucket) ?? 0) + 1);
+  }
+
+  if (counts.size === 0) {
+    return `<div class="card"><h2>Placements</h2><p class="muted">No placement data available.</p></div>`;
+  }
+
+  const rows = PLACEMENT_BUCKETS
+    .filter((b) => counts.has(b.label))
+    .map((b) => `
+      <div class="placement-row">
+        <span class="placement-label">${b.label}</span>
+        <span class="placement-count">${counts.get(b.label)}</span>
+      </div>`)
+    .join("");
+
+  return `<div class="card"><h2>Placements</h2><div class="placement-list">${rows}</div></div>`;
+}
+
 /**
  * Returns 1, 2, or 3 if charName is in the top-3 for the given stat
  * (higher = better), or null otherwise. Ties are treated inclusively
@@ -197,6 +291,7 @@ function renderCharDetail() {
     </div>
 
     ${buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups)}
+    ${buildPlacementsCard(currentAgg.tournamentResults, charName)}
     ${buildNotFacedCard(notFaced)}
   `;
 }
