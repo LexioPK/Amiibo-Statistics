@@ -1,0 +1,86 @@
+Winners Round 1
+Top 16
+1	Marth	 	
+Bye	 
+2	Zelda	1	
+Ice Climbers	3
+3	Young Link	0	
+Bowser	3
+4	Pichu	1	
+Falco	3
+5	Ganondorf	3	
+Roy	2
+6	Mewtwo	3	
+Mr. Game & Watch	0
+7	Dr. Mario	3	
+Peach	0
+8	Bye	 	
+Sheik	 
+Winners Quarter-final
+Top 12
+9	Marth	3	
+Ice Climbers	1
+10	Bowser	3	
+Falco	1
+11	Ganondorf	3	
+Mewtwo	1
+12	Dr. Mario	3	
+Sheik	0
+Winners Semi-final
+Top 6
+13	Marth	1	
+Bowser	3
+14	Ganondorf	3	
+Dr. Mario	0
+Winners Final
+Top 3
+15	Bowser	3	
+Ganondorf	1
+Grand Final (Set 1)
+Top 2
+16	Bowser	3	
+Ganondorf	0
+Grand Final (Set 2)
+Top 2
+17	Winner of 16	 	
+Loser of 16	 
+Losers Round 1
+Top 16
+18	Bye	 	
+Zelda	 
+19	Young Link	3	
+Pichu	1
+20	Roy	3	
+Mr. Game & Watch	0
+21	Peach	 	
+Bye	 
+Losers Round 2
+Top 12
+22	Sheik	3	
+Zelda	2
+23	Mewtwo	2	
+Young Link	3
+24	Falco	1	
+Roy	3
+25	Ice Climbers	1	
+Peach	3
+Losers Round 3
+Top 8
+26	Sheik	0	
+Young Link	3
+27	Roy	3	
+Peach	0
+Losers Round 4
+Top 6
+28	Marth	3	
+Young Link	1
+29	Dr. Mario	0	
+Roy	3
+Losers Round 5
+Top 4
+30	Marth	3	
+Roy	1
+Losers Final
+Top 3
+31	Ganondorf	3	
+Marth	1

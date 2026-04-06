@@ -1,13 +1,66 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./assets/style.css">
-    <title>Amiibo Statistics</title>
-</head>
-<body>
-    <h1>Amiibo Statistics</h1>
-    <script type="module" src="./assets/app.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Amiibo Stats — Tournaments</title>
+    <link rel="stylesheet" href="./assets/style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <span class="site-title">🎮 Amiibo Stats</span>
+        <nav class="site-nav">
+          <a href="./index.html" class="nav-link active">Tournaments</a>
+          <a href="./season.html" class="nav-link">Season</a>
+          <a href="./characters.html" class="nav-link">Characters</a>
+          <a href="./head-to-head.html" class="nav-link">Head-to-Head</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1>Tournament Data</h1>
+
+      <div class="controls card">
+        <div class="row">
+          <label>
+            Season:
+            <select id="seasonSelect"></select>
+          </label>
+          <label>
+            Tournament:
+            <select id="tournamentSelect"></select>
+          </label>
+          <span id="status" class="muted"></span>
+        </div>
+      </div>
+
+      <section class="card">
+        <h2>Summary</h2>
+        <div id="summary" class="pill-row"></div>
+      </section>
+
+      <section class="card">
+        <h2>Match Results</h2>
+        <div class="tableWrap">
+          <table id="matchesTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Winner</th>
+                <th>Score</th>
+                <th>Loser</th>
+                <th>Upset?</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="muted hint">⚡ Upset = winner had &lt;50% expected win probability based on Elo.</p>
+      </section>
+    </main>
+
+    <script type="module" src="./assets/tournaments.js"></script>
+  </body>
 </html>

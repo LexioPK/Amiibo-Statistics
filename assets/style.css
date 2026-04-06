@@ -1,5 +1,468 @@
-/* Styles for the app */
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Base ── */
 body {
-    font-family: Arial, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f3f4f6;
+  color: #1f2937;
+  line-height: 1.55;
+  min-height: 100vh;
 }
-/* Add more styles as needed */
+
+/* ── Site Header / Nav ── */
+.site-header {
+  background: #1e3a5f;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+.header-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  height: 54px;
+}
+.site-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+}
+.nav-link {
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  padding: 0.4rem 0.85rem;
+  border-radius: 5px;
+  font-size: 0.92rem;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-link:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.nav-link.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+
+/* ── Container ── */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+h1 { font-size: 1.7rem; margin-bottom: 0.2rem; }
+h2 { font-size: 1.05rem; margin-bottom: 0.75rem; font-weight: 600; }
+h3 { font-size: 0.97rem; font-weight: 600; }
+
+.muted { color: #6b7280; font-size: 0.88rem; }
+.hint { margin-top: 0.6rem; }
+code { background: #e5e7eb; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.84em; }
+
+/* ── Cards ── */
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+.controls.card { padding: 0.9rem 1.25rem; }
+
+/* ── Form Row ── */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  background: #fff;
+  min-width: 10rem;
+}
+select:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+
+/* ── Pills ── */
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.pill {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  min-width: 120px;
+  text-align: center;
+}
+.pill-warn {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  min-width: 180px;
+  text-align: left;
+}
+.pill-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; }
+.pill-val { font-size: 1.15rem; font-weight: 700; color: #1e3a5f; }
+.pill-warn .pill-val { font-size: 0.88rem; }
+
+/* ── Tables ── */
+.tableWrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+th, td {
+  padding: 0.42rem 0.65rem;
+  border: 1px solid #e5e7eb;
+  text-align: right;
+  white-space: nowrap;
+}
+th { background: #f9fafb; font-weight: 600; }
+td:nth-child(2), th:nth-child(2) { text-align: left; }
+.name-cell { text-align: left; }
+tr:nth-child(even) td { background: #fafafa; }
+tr.upset-row td { background: #fef9c3 !important; }
+
+.winner-cell { font-weight: 600; color: #15803d; }
+.score-cell { font-family: monospace; }
+
+/* Performance indicators on Characters page */
+.perf-good { color: #15803d; font-weight: 600; }
+.perf-poor { color: #b91c1c; }
+
+/* ── Head-to-Head ── */
+.h2h-overview {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.h2h-side {
+  flex: 1 1 160px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.1rem 1rem;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.h2h-side.h2h-leader {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+.h2h-rank { font-size: 0.8rem; color: #6b7280; }
+.h2h-name { font-size: 1.1rem; font-weight: 700; margin: 0.2rem 0; }
+.h2h-elo { font-size: 0.82rem; color: #6b7280; }
+.h2h-wins-big { font-size: 2.5rem; font-weight: 800; color: #1e3a5f; line-height: 1.1; margin-top: 0.5rem; }
+.h2h-wins-label { font-size: 0.78rem; color: #6b7280; }
+
+.h2h-center {
+  flex: 0 0 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  text-align: center;
+}
+.h2h-vs { font-size: 1.4rem; font-weight: 800; color: #374151; }
+.h2h-total { font-size: 0.82rem; color: #6b7280; }
+.h2h-verdict { font-size: 0.92rem; color: #374151; }
+.h2h-diff-row {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  color: #6b7280;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── Tournament section header rows ── */
+.section-header-row td {
+  background: #dbeafe !important;
+  font-weight: 700;
+  font-size: 0.87rem;
+  text-align: left !important;
+  padding: 0.45rem 0.65rem;
+  border-top: 2px solid #93c5fd;
+  color: #1e3a5f;
+  letter-spacing: 0.01em;
+}
+
+/* ── Character icons ── */
+.char-name-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+.char-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* ── Character Detail Page ── */
+.char-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.char-portrait {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f3f4f6;
+  flex-shrink: 0;
+}
+.char-detail-info {
+  flex: 1 1 200px;
+}
+.char-detail-name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1e3a5f;
+  margin-bottom: 0.2rem;
+}
+.char-detail-rank {
+  margin-bottom: 0.75rem;
+}
+.char-detail-stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.char-stat-block {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  min-width: 90px;
+  text-align: center;
+}
+.char-stat-val {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e3a5f;
+}
+.char-stat-lbl {
+  font-size: 0.72rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.15rem;
+}
+.matchup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+.matchup-row:last-child { border-bottom: none; }
+.matchup-record {
+  font-size: 0.88rem;
+  color: #374151;
+  white-space: nowrap;
+}
+.not-faced-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.not-faced-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* ── Medal stat blocks ── */
+.char-stat-block.medal-gold {
+  background: #fef9c3;
+  border-color: #fbbf24;
+}
+.char-stat-block.medal-silver {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+.char-stat-block.medal-bronze {
+  background: #fff7ed;
+  border-color: #d97706;
+}
+.medal-label {
+  font-size: 0.95em;
+}
+
+/* ── Matchup Highlights card ── */
+.matchup-highlight-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+.matchup-highlight-row:last-child { border-bottom: none; }
+.matchup-highlight-label {
+  min-width: 9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+/* ── Placements card ── */
+.placement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.placement-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.placement-row:last-child { border-bottom: none; }
+.placement-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e3a5f;
+}
+.placement-count {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2563eb;
+  min-width: 2rem;
+  text-align: right;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .header-inner { gap: 0.75rem; }
+  .site-title { font-size: 0.95rem; }
+  .nav-link { padding: 0.35rem 0.55rem; font-size: 0.82rem; }
+  .h2h-center { flex: 1 1 100%; order: -1; }
+}
+
+/* ── Side-by-side card row ── */
+.card-row {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+.card-row > .card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* Placements card stays compact so Matchup Highlights gets the bulk of the space */
+.card-row > .placements-card {
+  flex: 0 0 auto;
+  width: 155px;
+}
+@media (max-width: 700px) {
+  .card-row { flex-direction: column; }
+  .card-row > .placements-card { width: 100%; }
+}
+
+/* ── Character gallery ── */
+.char-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.char-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem 0.5rem 0.6rem;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+.char-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+  transform: translateY(-2px);
+}
+.char-card-portrait {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+.char-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.5rem;
+  gap: 0.1rem;
+}
+.char-card-rank {
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.char-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ── Back link ── */
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+.back-link:hover { text-decoration: underline; }

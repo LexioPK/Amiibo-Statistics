@@ -1,0 +1,242 @@
+
+Round 1
+1	Luigi	1	
+Lucina	0
+2	Mewtwo	1	
+Snake	0
+3	Olimar	1	
+Mr. Game & Watch	0
+4	Megaman	0	
+Rob	1
+5	Bayonetta	0	
+Jigglypuff	1
+6	Lucas	1	
+Sonic	0
+7	Young Link	1	
+Pikachu	0
+8	Peach	0	
+Fox	1
+9	Diddy Kong	0	
+Daisy	1
+10	Ness	1	
+King K. Rool	0
+11	Greninja	0	
+Roy	1
+12	Zero Suit Samus	1	
+Pichu	0
+13	Ice Climbers	1	
+Simon	0
+15	Mario	1	
+Falco	0
+14	Sans	0	
+Wolf	1
+16	Cloud	0	
+Ganondorf	1
+17	Donkey Kong	0	
+Zelda	1
+19	Incineroar	0	
+Little Mac	1
+18	Metaknight	0	
+Marth	1
+20	Wii-Fit Trainer	0	
+Pokemon Trainer	1
+21	Pit	1	
+Ike	0
+22	Link	0	
+Captain Falcon	1
+23	Sheik	1	
+Shulk	0
+24	Kirby	1	
+Palutena	0
+25	Bowser	1	
+Piranha Plant	0
+26	Samus	0	
+Robin	1
+27	Doctor Mario	1	
+Corrin	0
+28	Pac-Man	0	
+Ridley	1
+29	Ken	1	
+Inkling	0
+30	King Dedede	0	
+Luigi	1
+31	Mewtwo	0	
+Olimar	1
+32	Rob	0	
+Jigglypuff	1
+33	Lucas	0	
+Young Link	1
+34	Fox	1	
+Daisy	0
+35	Ness	0	
+Roy	1
+36	Zero Suit Samus	1	
+Ice Climbers	0
+37	Wolf	1	
+Mario	0
+38	Lucario	0	
+Ganondorf	1
+39	Zelda	1	
+Marth	0
+40	Little Mac	0	
+Pokemon Trainer	1
+41	Pit	1	
+Captain Falcon	0
+42	Yoshi	1	
+Sheik	0
+45	Ridley	1	
+Ken	0
+43	Kirby	0	
+Bowser	1
+44	Robin	0	
+Doctor Mario	1
+46	Luigi	0	
+Olimar	1
+47	Jigglypuff	0	
+Young Link	1
+48	Fox	1	
+Roy	0
+49	Zero Suit Samus	1	
+Wolf	0
+50	Ganondorf	0	
+Zelda	1
+51	Pokemon Trainer	0	
+Pit	1
+52	Yoshi	0	
+Bowser	1
+53	Doctor Mario	1	
+Ridley	0
+57	Bowser	0	
+Doctor Mario	1
+56	Zelda	1	
+Pit	0
+55	Fox	0	
+Zero Suit Samus	1
+54	Olimar	0	
+Young Link	1
+58	Young Link	1	
+Zero Suit Samus	0
+59	Zelda	1	
+Doctor Mario	0
+60	Young Link	1	
+Zelda	0
+61	Snake	0	
+Mr. Game & Watch	1
+62	Megaman	1	
+Bayonetta	0
+63	Sonic	0	
+Pikachu	1
+64	Peach	0	
+Diddy Kong	1
+65	King K. Rool	0	
+Greninja	1
+66	Pichu	1	
+Simon	0
+67	Sans	0	
+Falco	1
+68	Donkey Kong	1	
+Metaknight	0
+69	Incineroar	1	
+Wii-Fit Trainer	0
+70	Ike	0	
+Link	1
+71	Palutena	0	
+Piranha Plant	1
+72	Samus	0	
+Corrin	1
+73	Pac-Man	0	
+Inkling	1
+74	Ken	0	
+Lucina	1
+75	Robin	0	
+Mr. Game & Watch	1
+76	Kirby	1	
+Megaman	0
+77	Sheik	0	
+Pikachu	1
+78	Captain Falcon	0	
+Diddy Kong	1
+79	Little Mac	1	
+Greninja	0
+80	Marth	0	
+Pichu	1
+81	Lucario	1	
+Falco	0
+82	Mario	0	
+Cloud	1
+83	Ice Climbers	1	
+Donkey Kong	0
+84	Ness	1	
+Incineroar	0
+85	Daisy	0	
+Link	1
+86	Lucas	1	
+Shulk	0
+89	King Dedede	0	
+Inkling	1
+88	Mewtwo	0	
+Corrin	1
+91	Kirby	0	
+Pikachu	1
+92	Diddy Kong	0	
+Little Mac	1
+87	Rob	0	
+Piranha Plant	1
+90	Lucina	0	
+Mr. Game & Watch	1
+93	Pichu	1	
+Lucario	0
+94	Cloud	1	
+Ice Climbers	0
+95	Ness	1	
+Link	0
+96	Lucas	0	
+Piranha Plant	1
+97	Corrin	1	
+Inkling	0
+98	Wolf	1	
+Mr. Game & Watch	0
+99	Roy	0	
+Pikachu	1
+100	Jigglypuff	1	
+Little Mac	0
+101	Luigi	1	
+Pichu	0
+102	Ridley	0	
+Cloud	1
+103	Yoshi	1	
+Ness	0
+104	Pokemon Trainer	0	
+Piranha Plant	1
+105	Ganondorf	1	
+Corrin	0
+106	Wolf	0	
+Pikachu	1
+110	Pit	1	
+Pikachu	0
+107	Jigglypuff	0	
+Luigi	1
+108	Cloud	0	
+Yoshi	1
+112	Olimar	1	
+Yoshi	0
+111	Bowser	0	
+Luigi	1
+109	Piranha Plant	0	
+Ganondorf	1
+113	Fox	0	
+Ganondorf	1
+114	Pit	0	
+Luigi	1
+115	Olimar	1	
+Ganondorf	0
+116	Zero Suit Samus	1	
+Luigi	0
+117	Doctor Mario	1	
+Olimar	0
+118	Zero Suit Samus	0	
+Doctor Mario	1
+119	Zelda	0	
+Doctor Mario	1
+120	Young Link	1	
+Doctor Mario	0

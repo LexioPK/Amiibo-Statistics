@@ -1,0 +1,156 @@
+Winners Round 1
+Top 32
+1	Simon	 	
+Bye	 
+2	Daisy	2	
+Hero	3
+3	Joker	 	
+Bye	 
+4	Bye	 	
+Isabelle	 
+5	Inkling	 	
+Bye	 
+6	Piranha Plant	0	
+Incineroar	3
+7	Ken	0	
+Terry	3
+8	Bye	 	
+Byleth	 
+9	Pyra/Mythra	 	
+Bye	 
+10	Chrom	3	
+Steve	1
+11	Min Min	3	
+Sephiroth	1
+12	Bye	 	
+Richter	 
+13	Dark Samus	 	
+Bye	 
+14	Ridley	3	
+Banjo & Kazooie	2
+15	King K. Rool	3	
+Kazuya	2
+16	Bye	 	
+Sora	 
+Winners Round 2
+Top 24
+17	Simon	0	
+Hero	3
+18	Joker	3	
+Isabelle	2
+19	Inkling	0	
+Incineroar	3
+20	Terry	0	
+Byleth	3
+21	Pyra/Mythra	3	
+Chrom	0
+22	Min Min	3	
+Richter	1
+23	Dark Samus	1	
+Ridley	3
+24	King K. Rool	0	
+Sora	3
+Winners Quarter-final
+Top 12
+25	Hero	3	
+Joker	1
+26	Incineroar	2	
+Byleth	3
+27	Pyra/Mythra	3	
+Min Min	0
+28	Ridley	0	
+Sora	3
+Winners Semi-final
+Top 6
+29	Hero	3	
+Byleth	1
+30	Pyra/Mythra	0	
+Sora	3
+Winners Final
+Top 3
+31	Hero	3	
+Sora	2
+Grand Final (Set 1)
+Top 2
+32	Hero	0	
+Byleth	3
+Grand Final (Set 2)
+Top 2
+33	Byleth	3	
+Hero	1
+Losers Round 1
+Top 32
+34	Bye	 	
+Daisy	 
+35	Bye	 	
+Bye	 
+36	Bye	 	
+Piranha Plant	 
+37	Ken	 	
+Bye	 
+38	Bye	 	
+Steve	 
+39	Sephiroth	 	
+Bye	 
+40	Bye	 	
+Banjo & Kazooie	 
+41	Kazuya	 	
+Bye	 
+Losers Round 2
+Top 24
+42	King K. Rool	3	
+Daisy	0
+43	Dark Samus	 	
+Bye	 
+44	Richter	1	
+Piranha Plant	3
+45	Chrom	3	
+Ken	0
+46	Terry	2	
+Steve	3
+47	Inkling	3	
+Sephiroth	2
+48	Isabelle	1	
+Banjo & Kazooie	3
+49	Simon	0	
+Kazuya	3
+Losers Round 3
+Top 16
+50	King K. Rool	3	
+Dark Samus	2
+51	Piranha Plant	2	
+Chrom	3
+52	Steve	3	
+Inkling	1
+53	Banjo & Kazooie	1	
+Kazuya	3
+Losers Round 4
+Top 12
+54	Incineroar	3	
+King K. Rool	1
+55	Joker	3	
+Chrom	2
+56	Ridley	3	
+Steve	2
+57	Min Min	1	
+Kazuya	3
+Losers Round 5
+Top 8
+58	Incineroar	3	
+Joker	2
+59	Ridley	3	
+Kazuya	2
+Losers Round 6
+Top 6
+60	Pyra/Mythra	0	
+Incineroar	3
+61	Byleth	3	
+Ridley	0
+Losers Round 7
+Top 4
+62	Incineroar	0	
+Byleth	3
+Losers Final
+Top 3
+63	Sora	2	
+Byleth	3
