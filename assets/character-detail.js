@@ -152,8 +152,15 @@ function derivePlacement(sections, charName) {
 
 function buildPlacementsCard(tournamentResults, charName) {
   const counts = new Map();
+  let totalTournaments = 0;
 
   for (const { result } of tournamentResults) {
+    // Count participation: character appeared in at least one match
+    const participated = result.matches.some(
+      (m) => m.winner === charName || m.loser === charName,
+    );
+    if (participated) totalTournaments++;
+
     const placement = derivePlacement(result.sections, charName);
     if (placement == null) continue;
     const bucket = placementBucket(placement);
@@ -167,14 +174,24 @@ function buildPlacementsCard(tournamentResults, charName) {
 
   const rows = PLACEMENT_BUCKETS
     .filter((b) => counts.has(b.label))
-    .map((b) => `
+    .map((b) => {
+      const n = counts.get(b.label);
+      const pctStr = totalTournaments > 0
+        ? ` <span class="placement-pct">(${(n / totalTournaments * 100).toFixed(1)}%)</span>`
+        : "";
+      return `
       <div class="placement-row">
         <span class="placement-label">${b.label}</span>
-        <span class="placement-count">${counts.get(b.label)}</span>
-      </div>`)
+        <span class="placement-count">${n}${pctStr}</span>
+      </div>`;
+    })
     .join("");
 
-  return `<div class="card placements-card"><h2>Placements</h2><div class="placement-list">${rows}</div></div>`;
+  const totalNote = totalTournaments > 0
+    ? `<p class="muted placement-total">of ${totalTournaments} tournament${totalTournaments !== 1 ? "s" : ""}</p>`
+    : "";
+
+  return `<div class="card placements-card"><h2>Placements</h2><div class="placement-list">${rows}</div>${totalNote}</div>`;
 }
 
 /**

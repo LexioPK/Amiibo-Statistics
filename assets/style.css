@@ -451,6 +451,16 @@ tr.upset-row td { background: #fef9c3 !important; }
   min-width: 2rem;
   text-align: right;
 }
+.placement-pct {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin-left: 0.2rem;
+}
+.placement-total {
+  margin-top: 0.4rem;
+  text-align: right;
+}
 
 /* ── Responsive ── */
 @media (max-width: 600px) {
@@ -473,7 +483,7 @@ tr.upset-row td { background: #fef9c3 !important; }
 /* Placements card stays compact so Matchup Highlights gets the bulk of the space */
 .card-row > .placements-card {
   flex: 0 0 auto;
-  width: 155px;
+  width: 210px;
 }
 @media (max-width: 700px) {
   .card-row { flex-direction: column; }
