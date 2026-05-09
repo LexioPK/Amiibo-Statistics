@@ -169,10 +169,68 @@ function buildWinnerAdjacency(roster, h2hMap) {
   return winsByChar;
 }
 
+function cycleSlice(cycle, startIdx, endIdx) {
+  const out = [];
+  let i = startIdx;
+  while (true) {
+    out.push(cycle[i]);
+    if (i === endIdx) break;
+    i = (i + 1) % cycle.length;
+  }
+  return out;
+}
+
+function tryMergeCycles(c1, c2, winsByChar) {
+  const m = c1.length;
+  const n = c2.length;
+  for (let i = 0; i < m; i++) {
+    const a = c1[i];
+    const aNextIdx = (i + 1) % m;
+    const aNext = c1[aNextIdx];
+    const winsA = winsByChar.get(a) ?? new Set();
+    for (let j = 0; j < n; j++) {
+      const b = c2[j];
+      const bNext = c2[(j + 1) % n];
+      const winsB = winsByChar.get(b) ?? new Set();
+      if (!winsA.has(bNext) || !winsB.has(aNext)) continue;
+
+      const seg2 = cycleSlice(c2, (j + 1) % n, j);
+      const seg1 = cycleSlice(c1, aNextIdx, (i - 1 + m) % m);
+      return [a, ...seg2, ...seg1];
+    }
+  }
+  return null;
+}
+
+function mergeCyclesGreedy(cycles, winsByChar) {
+  const work = cycles.map((c) => c.slice());
+  if (work.length <= 1) return work;
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    work.sort((a, b) => b.length - a.length);
+
+    outer:
+    for (let i = 0; i < work.length; i++) {
+      for (let j = i + 1; j < work.length; j++) {
+        const merged = tryMergeCycles(work[i], work[j], winsByChar) ?? tryMergeCycles(work[j], work[i], winsByChar);
+        if (!merged) continue;
+        work.splice(j, 1);
+        work.splice(i, 1, merged);
+        changed = true;
+        break outer;
+      }
+    }
+  }
+
+  work.sort((a, b) => b.length - a.length);
+  return work;
+}
+
 function chooseParityCover(chars, winsByChar) {
   const n = chars.length;
   if (n === 0) return { succ: new Map(), cycles: [] };
-  const idx = new Map(chars.map((c, i) => [c, i]));
 
   const w = Array.from({ length: n + 1 }, () => Array(n + 1).fill(0));
   for (let i = 1; i <= n; i++) {
@@ -232,10 +290,10 @@ function chooseParityCover(chars, winsByChar) {
     } while (j0 !== 0);
   }
 
-  const succ = new Map();
+  const succAll = new Map();
   for (let j = 1; j <= n; j++) {
     const i = p[j];
-    succ.set(chars[i - 1], chars[j - 1]);
+    succAll.set(chars[i - 1], chars[j - 1]);
   }
 
   const visited = new Set();
@@ -246,7 +304,7 @@ function chooseParityCover(chars, winsByChar) {
     let cur = c;
     while (!visited.has(cur) && !seen.has(cur)) {
       seen.set(cur, seen.size);
-      cur = succ.get(cur);
+      cur = succAll.get(cur);
       if (!cur) break;
     }
     for (const k of seen.keys()) visited.add(k);
@@ -258,9 +316,15 @@ function chooseParityCover(chars, winsByChar) {
     }
   }
 
-  cycles.sort((a, b) => b.length - a.length);
-  const biggestCycle = cycles.length > 0 ? [cycles[0]] : [];
-  return { succ, cycles: biggestCycle };
+  const mergedCycles = mergeCyclesGreedy(cycles, winsByChar);
+  const biggestCycle = mergedCycles.length > 0 ? mergedCycles[0] : null;
+  const succ = new Map();
+  if (biggestCycle) {
+    for (let i = 0; i < biggestCycle.length; i++) {
+      succ.set(biggestCycle[i], biggestCycle[(i + 1) % biggestCycle.length]);
+    }
+  }
+  return { succ, cycles: biggestCycle ? [biggestCycle] : [] };
 }
 
 function renderParity() {
