@@ -146,6 +146,83 @@ tr.upset-row td { background: #fef9c3 !important; }
 .winner-cell { font-weight: 600; color: #15803d; }
 .score-cell { font-family: monospace; }
 
+.season-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.season-tab-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.86rem;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+}
+.season-tab-btn.active {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+.parity-canvas {
+  position: relative;
+  width: min(900px, 100%);
+  aspect-ratio: 1 / 1;
+  margin: 0.75rem auto 0.4rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  overflow: hidden;
+}
+.parity-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.parity-layer {
+  position: absolute;
+  inset: 0;
+}
+.parity-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 62px;
+  gap: 0.18rem;
+}
+.parity-node img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 50%;
+  padding: 2px;
+}
+.parity-node span {
+  font-size: 0.66rem;
+  line-height: 1.1;
+  color: #374151;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.9);
+}
+.parity-node-center img {
+  width: 28px;
+  height: 28px;
+}
+.parity-node-center span {
+  font-size: 0.62rem;
+}
+
 /* Performance indicators on Characters page */
 .perf-good { color: #15803d; font-weight: 600; }
 .perf-poor { color: #b91c1c; }

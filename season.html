@@ -34,31 +34,51 @@
       </div>
 
       <section class="card">
-        <div id="noDataMsg" class="muted" style="padding:0.5rem 0">
-          No tournament data found for this season yet.
+        <div class="season-tabs" role="tablist" aria-label="Season views">
+          <button id="tabBtnRankings" class="season-tab-btn active" role="tab" aria-selected="true">Rankings</button>
+          <button id="tabBtnParity" class="season-tab-btn" role="tab" aria-selected="false">Circle of Parity</button>
         </div>
-        <div class="tableWrap">
-          <table id="statsTable">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Character</th>
-                <th>Elo</th>
-                <th>Matches</th>
-                <th>Wins</th>
-                <th>Losses</th>
-                <th>Win %</th>
-                <th>Upsets</th>
-                <th>Upset %</th>
-                <th title="How closely actual win rate matches Elo-expected win rate (higher = more consistent)">Consistency</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+
+        <div id="panelRankings" class="season-tab-panel">
+          <div id="noDataMsg" class="muted" style="padding:0.5rem 0">
+            No tournament data found for this season yet.
+          </div>
+          <div class="tableWrap">
+            <table id="statsTable">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Character</th>
+                  <th>Elo</th>
+                  <th>Matches</th>
+                  <th>Wins</th>
+                  <th>Losses</th>
+                  <th>Win %</th>
+                  <th>Upsets</th>
+                  <th>Upset %</th>
+                  <th title="How closely actual win rate matches Elo-expected win rate (higher = more consistent)">Consistency</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="muted hint">
+            Consistency = how closely a character's actual win rate matches their Elo-expected win rate. Higher is better.
+          </p>
         </div>
-        <p class="muted hint">
-          Consistency = how closely a character's actual win rate matches their Elo-expected win rate. Higher is better.
-        </p>
+
+        <div id="panelParity" class="season-tab-panel" hidden>
+          <p class="muted" id="parityMeta"></p>
+          <div id="parityEmpty" class="muted" hidden>No parity cycles found for this selection.</div>
+          <div id="parityCanvas" class="parity-canvas" hidden>
+            <svg id="paritySvg" class="parity-svg" viewBox="0 0 900 900" aria-hidden="true"></svg>
+            <div id="parityNodesOuter" class="parity-layer parity-layer-outer"></div>
+            <div id="parityNodesCenter" class="parity-layer parity-layer-center"></div>
+          </div>
+          <p class="muted hint">
+            Arrow direction means “this amiibo has beaten that amiibo” in the selected season data.
+          </p>
+        </div>
       </section>
     </main>
 
