@@ -192,12 +192,6 @@ tr.upset-row td { background: #fef9c3 !important; }
 .parity-node {
   position: absolute;
   transform: translate(-50%, -50%);
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  width: 62px;
-  gap: 0.18rem;
 }
 .parity-node img {
   width: 32px;
@@ -208,19 +202,9 @@ tr.upset-row td { background: #fef9c3 !important; }
   border-radius: 50%;
   padding: 2px;
 }
-.parity-node span {
-  font-size: 0.66rem;
-  line-height: 1.1;
-  color: #374151;
-  white-space: nowrap;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.9);
-}
 .parity-node-center img {
   width: 28px;
   height: 28px;
-}
-.parity-node-center span {
-  font-size: 0.62rem;
 }
 
 /* Performance indicators on Characters page */

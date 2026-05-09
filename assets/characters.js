@@ -352,7 +352,7 @@ function renderParity() {
     node.className = "parity-node";
     node.style.left = `${(p.x / W) * 100}%`;
     node.style.top = `${(p.y / H) * 100}%`;
-    node.innerHTML = `<img src="${iconPath(name)}" alt="${name}" onerror="this.style.display='none'"><span>${name}</span>`;
+    node.innerHTML = `<img src="${iconPath(name)}" alt="${name}" onerror="this.style.display='none'">`;
     parityNodesOuter.appendChild(node);
   }
 
@@ -362,7 +362,7 @@ function renderParity() {
     node.className = "parity-node parity-node-center";
     node.style.left = `${(p.x / W) * 100}%`;
     node.style.top = `${(p.y / H) * 100}%`;
-    node.innerHTML = `<img src="${iconPath(name)}" alt="${name}" onerror="this.style.display='none'"><span>${name}</span>`;
+    node.innerHTML = `<img src="${iconPath(name)}" alt="${name}" onerror="this.style.display='none'">`;
     parityNodesCenter.appendChild(node);
   }
 }
