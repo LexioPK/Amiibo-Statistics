@@ -259,7 +259,8 @@ function chooseParityCover(chars, winsByChar) {
   }
 
   cycles.sort((a, b) => b.length - a.length);
-  return { succ, cycles };
+  const biggestCycle = cycles.length > 0 ? [cycles[0]] : [];
+  return { succ, cycles: biggestCycle };
 }
 
 function renderParity() {
