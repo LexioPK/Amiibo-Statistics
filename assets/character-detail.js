@@ -93,6 +93,7 @@ const PLACEMENT_BUCKETS = [
   { label: "Top 16", max: 16 },
   { label: "Top 24", max: 24 },
   { label: "Top 32", max: 32 },
+  { label: "Top 48", max: 48 },
   { label: "Top 64", max: 64 },
   { label: "Top 96", max: 96 },
 ];
