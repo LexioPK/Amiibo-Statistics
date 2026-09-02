@@ -1,1 +1,1 @@
-{"type":"module","scripts":{"generate":"node scripts/generate.mjs"},"dependencies":{"cheerio":"^1.0.0"}}
+{"type":"module","scripts":{"generate":"node scripts/generate.mjs","test":"node --test"},"dependencies":{"cheerio":"^1.0.0"}}

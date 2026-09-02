@@ -1,14 +1,25 @@
-// This is the API route for fetching and parsing tournament match data
+// API route serving the auto-generated Glicko-2 ranking system, which
+// replaces the old final-placement "season" leaderboard as the source of
+// truth for a season's standings. The underlying data is produced by
+// `npm run generate` (scripts/generate.mjs), which fetches and parses
+// individual tournament matches and computes Glicko-2 rating/RD per player.
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
 export async function GET(req, { params }) {
     const season = params.season;
-    // Logic to read and parse CSV files and fetch bracket match pages
-    // Here, implement the logic to extract character names, scores, and determine winners
+    const rankingsPath = path.join(process.cwd(), 'data', 'rankings', `season-${season}.json`);
 
-    return NextResponse.json({ 
-        message: `Stats for season ${season} fetched successfully.`
-    });
+    if (!fs.existsSync(rankingsPath)) {
+        return NextResponse.json(
+            {
+                message: `No Glicko-2 ranking data available for season ${season} yet. Run "npm run generate" after adding a match_url for this season in data/tournaments.csv.`,
+            },
+            { status: 404 },
+        );
+    }
+
+    const data = JSON.parse(fs.readFileSync(rankingsPath, 'utf8'));
+    return NextResponse.json(data);
 }
