@@ -292,7 +292,7 @@ function renderCharDetail() {
       <img class="char-portrait" src="${portraitPath(charName)}" alt="${charName}" onerror="this.style.display='none'">
       <div class="char-detail-info">
         <div class="char-detail-name">${charName}</div>
-        <div class="char-detail-rank muted">${rosterEntry ? `Rank #${rosterEntry.rank ?? "?"} · ${rosterEntry.elo} Elo` : ""}</div>
+        <div class="char-detail-rank muted">${rosterEntry ? `Rank #${rosterEntry.rank ?? "?"} · ${rosterEntry.elo} Rating${rosterEntry.rd != null ? ` (RD ${rosterEntry.rd})` : ""}` : ""}</div>
         <div class="char-detail-stats-grid">
           <div class="char-stat-block${medalClass(winRateRank)}">
             <div class="char-stat-val">${winRate}${winRateRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][winRateRank-1]}</span>` : ""}</div>

@@ -31,33 +31,9 @@ const HARDCODED_ALIASES = new Map([
 ]);
 
 /** If nameRaw is a known alternate spelling, return the preferred name; otherwise return nameRaw unchanged. */
-function resolveAlias(nameRaw) {
+export function resolveAlias(nameRaw) {
   const key = canonKey(nameRaw);
   return HARDCODED_ALIASES.get(key) ?? nameRaw;
-}
-
-export function parseCsvLoose(line) {
-  const out = [];
-  let cur = "";
-  let inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQ && i + 1 < line.length && line[i + 1] === '"') { cur += '"'; i++; continue; }
-      inQ = !inQ;
-      continue;
-    }
-    if (ch === "," && !inQ) { out.push(cur); cur = ""; continue; }
-    cur += ch;
-  }
-  out.push(cur);
-  return out.map((x) => x.trim());
-}
-
-export function stripQuotes(s) {
-  const t = String(s ?? "").trim();
-  if (t.startsWith('"') && t.endsWith('"')) return t.slice(1, -1);
-  return t;
 }
 
 export async function fetchText(url) {
@@ -73,86 +49,54 @@ export async function fetchJson(url) {
 }
 
 /**
- * Loads season roster from Season Data CSV.
- * Returns { roster, eloByNameKey, displayByNameKey }
+ * Builds the roster context shape ({ roster, eloByNameKey, displayByNameKey,
+ * rankByNameKey }) that the rest of the app consumes, from a list of computed
+ * Glicko-2 rating rows ({ rank, name, rating, rd, matches }).
+ *
+ * `elo` here holds the character's current Glicko-2 rating (kept under the
+ * historical name for compatibility with the rest of the codebase); `rd`
+ * carries the rating deviation (uncertainty) alongside it.
  */
-export async function loadSeasonRoster(season) {
-  const url = `./${encodeURIComponent("Season Data")}/${encodeURIComponent(`Season ${season}.csv`)}`;
-  const text = await fetchText(url);
-  const lines = text.split(/\r?\n/g).map((l) => l.trim()).filter(Boolean);
-
+function buildRosterContext(rows) {
   const roster = [];
   const eloByNameKey = new Map();
+  const rdByNameKey = new Map();
   const displayByNameKey = new Map();
   const rankByNameKey = new Map();
 
-  for (const line of lines) {
-    const cols = parseCsvLoose(line);
-    const rank = Number(stripQuotes(cols[0] ?? ""));
-    const name = stripQuotes(cols[1] ?? "");
-    const elo = Number(stripQuotes(cols[2] ?? ""));
-    const alias = stripQuotes(cols[4] ?? "");
+  for (const row of rows) {
+    const name = norm(row.name);
+    const entry = { rank: row.rank ?? null, name, elo: row.rating, rd: row.rd };
+    roster.push(entry);
 
-    if (!name || !Number.isFinite(elo)) continue;
-
-    const row = { rank: Number.isFinite(rank) ? rank : null, name: norm(name), alias: norm(alias), elo };
-    roster.push(row);
-
-    const keys = new Set([canonKey(row.name)]);
-    if (row.alias) keys.add(canonKey(row.alias));
-    for (const k of keys) {
-      eloByNameKey.set(k, elo);
-      displayByNameKey.set(k, row.name);
-      if (row.rank != null) rankByNameKey.set(k, row.rank);
-    }
+    const key = canonKey(name);
+    eloByNameKey.set(key, row.rating);
+    rdByNameKey.set(key, row.rd);
+    displayByNameKey.set(key, name);
+    if (entry.rank != null) rankByNameKey.set(key, entry.rank);
   }
 
-  roster.sort((a, b) => {
-    if (a.rank != null && b.rank != null) return a.rank - b.rank;
-    return b.elo - a.elo;
-  });
-
-  return { roster, eloByNameKey, displayByNameKey, rankByNameKey };
+  return { roster, eloByNameKey, rdByNameKey, displayByNameKey, rankByNameKey };
 }
 
-/** Loads the all-time roster from "Season Data/All Times.csv". */
+/**
+ * Loads the season roster: every amiibo's Glicko-2 rating/RD as of the end of
+ * the given season, computed automatically from all recorded tournament
+ * matches (season 1 through the requested season, in chronological order).
+ * Characters that hadn't competed yet by that season are excluded.
+ * Returns { roster, eloByNameKey, rdByNameKey, displayByNameKey, rankByNameKey }
+ */
+export async function loadSeasonRoster(season) {
+  const { getSeasonRatings } = await import("./rating-engine.js");
+  const rows = await getSeasonRatings(season);
+  return buildRosterContext(rows);
+}
+
+/** Loads the all-time roster: every amiibo's Glicko-2 rating/RD as of the end of the most recent season. */
 export async function loadAllTimesRoster() {
-  const url = `./${encodeURIComponent("Season Data")}/${encodeURIComponent("All Times.csv")}`;
-  const text = await fetchText(url);
-  const lines = text.split(/\r?\n/g).map((l) => l.trim()).filter(Boolean);
-
-  const roster = [];
-  const eloByNameKey = new Map();
-  const displayByNameKey = new Map();
-  const rankByNameKey = new Map();
-
-  for (const line of lines) {
-    const cols = parseCsvLoose(line);
-    const rank = Number(stripQuotes(cols[0] ?? ""));
-    const name = stripQuotes(cols[1] ?? "");
-    const elo = Number(stripQuotes(cols[2] ?? ""));
-    const alias = stripQuotes(cols[4] ?? "");
-
-    if (!name || !Number.isFinite(elo)) continue;
-
-    const row = { rank: Number.isFinite(rank) ? rank : null, name: norm(name), alias: norm(alias), elo };
-    roster.push(row);
-
-    const keys = new Set([canonKey(row.name)]);
-    if (row.alias) keys.add(canonKey(row.alias));
-    for (const k of keys) {
-      eloByNameKey.set(k, elo);
-      displayByNameKey.set(k, row.name);
-      if (row.rank != null) rankByNameKey.set(k, row.rank);
-    }
-  }
-
-  roster.sort((a, b) => {
-    if (a.rank != null && b.rank != null) return a.rank - b.rank;
-    return b.elo - a.elo;
-  });
-
-  return { roster, eloByNameKey, displayByNameKey, rankByNameKey };
+  const { getAllTimeRatings } = await import("./rating-engine.js");
+  const rows = await getAllTimeRatings();
+  return buildRosterContext(rows);
 }
 
 export async function loadTournamentIndex(season) {

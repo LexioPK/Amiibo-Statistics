@@ -137,6 +137,7 @@ function renderStats(roster, perChar) {
       <td>${r.rank ?? ""}</td>
       <td class="name-cell"><span class="char-name-wrap">${r.name}<img class="char-icon" src="${iconPath(r.name)}" alt="" onerror="this.style.display='none'"></span></td>
       <td>${r.elo}</td>
+      <td>${r.rd ?? "—"}</td>
       <td>${st.matches}</td>
       <td>${st.wins}</td>
       <td>${st.losses}</td>

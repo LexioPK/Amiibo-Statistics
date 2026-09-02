@@ -49,21 +49,23 @@
                 <tr>
                   <th>Rank</th>
                   <th>Character</th>
-                  <th>Elo</th>
+                  <th title="Glicko-2 rating">Rating</th>
+                  <th title="Rating Deviation — lower means the system is more confident in this rating">RD</th>
                   <th>Matches</th>
                   <th>Wins</th>
                   <th>Losses</th>
                   <th>Win %</th>
                   <th>Upsets</th>
                   <th>Upset %</th>
-                  <th title="How closely actual win rate matches Elo-expected win rate (higher = more consistent)">Consistency</th>
+                  <th title="How closely actual win rate matches rating-expected win rate (higher = more consistent)">Consistency</th>
                 </tr>
               </thead>
               <tbody></tbody>
             </table>
           </div>
           <p class="muted hint">
-            Consistency = how closely a character's actual win rate matches their Elo-expected win rate. Higher is better.
+            Ratings are computed automatically with a Glicko-2 system from every recorded tournament match — no season data files needed.
+            Consistency = how closely a character's actual win rate matches their rating-expected win rate. Higher is better.
           </p>
         </div>
 
