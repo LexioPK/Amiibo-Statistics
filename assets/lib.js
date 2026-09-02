@@ -93,10 +93,11 @@ function buildRosterContext(rows) {
 }
 
 /**
- * Loads the season roster: every amiibo's Glicko-2 rating/RD as of the end of
- * the given season, computed automatically from all recorded tournament
- * matches (season 1 through the requested season, in chronological order).
- * Characters that hadn't competed yet by that season are excluded.
+ * Loads the season roster: every amiibo's Glicko-2 rating/RD for the given
+ * season alone. Every player starts fresh from the standard starting
+ * rating/RD at the beginning of the season (a reset), so standings only
+ * reflect that season's own matches — not earlier or later seasons.
+ * Characters who didn't compete that season are excluded.
  * Returns { roster, eloByNameKey, rdByNameKey, displayByNameKey, rankByNameKey }
  */
 export async function loadSeasonRoster(season) {
@@ -105,7 +106,12 @@ export async function loadSeasonRoster(season) {
   return buildRosterContext(rows);
 }
 
-/** Loads the all-time roster: every amiibo's Glicko-2 rating/RD as of the end of the most recent season. */
+/**
+ * Loads the all-time roster: every amiibo's Glicko-2 rating/RD from the
+ * single continuous history across every recorded tournament (no per-season
+ * resets), with more recent seasons weighted slightly more heavily so
+ * current performance counts a bit more without diminishing earlier results.
+ */
 export async function loadAllTimesRoster() {
   const { getAllTimeRatings } = await import("./rating-engine.js");
   const rows = await getAllTimeRatings();
@@ -390,16 +396,12 @@ export function computeTournamentResults(text, ctx) {
 // ── Aggregation ───────────────────────────────────────────────────────────────
 
 /**
- * Builds a copy of `ctx` whose rank/rating lookups reflect standings as of
- * immediately *before* the given tournament (rather than the season-end or
- * all-time snapshot), so upsets are judged against "at the time" rankings.
- * Name-display lookups (`displayByNameKey`) are left untouched since those
- * are just alias→canonical-name mappings, not point-in-time standings.
+ * Builds a copy of `ctx` whose rank/rating lookups are overridden from the
+ * given rating rows. Name-display lookups (`displayByNameKey`) are left
+ * untouched since those are just alias→canonical-name mappings, not
+ * point-in-time standings.
  */
-async function contextForTournament(season, filename, baseCtx) {
-  const { getRatingsBeforeTournament } = await import("./rating-engine.js");
-  const rows = await getRatingsBeforeTournament(season, filename);
-
+function contextFromRows(rows, baseCtx) {
   const rankByNameKey = new Map();
   const eloByNameKey = new Map(baseCtx.eloByNameKey);
   for (const row of rows) {
@@ -412,22 +414,53 @@ async function contextForTournament(season, filename, baseCtx) {
 }
 
 /**
- * Loads the roster context to use for a single tournament: display names come
- * from the season roster, but rank/rating reflect standings immediately
- * before that tournament was played (see `contextForTournament`).
+ * Builds a copy of `ctx` whose rank/rating lookups reflect standings as of
+ * immediately *before* the given tournament, within that tournament's own
+ * season (season-reset), so a season's upsets are judged against "at the
+ * time" rankings for that season alone.
  */
-export async function loadTournamentRosterContext(season, filename, baseCtx) {
-  const ctx = baseCtx ?? await loadSeasonRoster(season);
-  return contextForTournament(season, filename, ctx);
+async function contextForTournament(season, filename, baseCtx) {
+  const { getSeasonRatingsBeforeTournament } = await import("./rating-engine.js");
+  const rows = await getSeasonRatingsBeforeTournament(season, filename);
+  return contextFromRows(rows, baseCtx);
+}
+
+/**
+ * Builds a copy of `ctx` whose rank/rating lookups reflect the continuous
+ * all-time standings as of immediately *before* the given tournament (across
+ * every season, no resets), for the "All Time" view.
+ */
+async function contextForTournamentAllTime(season, filename, baseCtx) {
+  const { getAllTimeRatingsBeforeTournament } = await import("./rating-engine.js");
+  const rows = await getAllTimeRatingsBeforeTournament(season, filename);
+  return contextFromRows(rows, baseCtx);
+}
+
+/**
+ * Loads the roster context to use for a single tournament. By default,
+ * display names and rank/rating come from that tournament's own season
+ * (reset at the start of the season). Pass `{ continuous: true }` to use the
+ * continuous all-time standings instead (for the "All Time" tournament
+ * browser), optionally with a pre-loaded all-time `baseCtx`.
+ */
+export async function loadTournamentRosterContext(season, filename, baseCtx, opts = {}) {
+  const continuous = opts.continuous ?? false;
+  const ctx = baseCtx ?? (continuous ? await loadAllTimesRoster() : await loadSeasonRoster(season));
+  return continuous
+    ? contextForTournamentAllTime(season, filename, ctx)
+    : contextForTournament(season, filename, ctx);
 }
 
 /**
  * Loads all tournaments for one season and aggregates per-character + h2h data.
- * Each tournament's upsets are computed against standings as of immediately
- * before that tournament (not the season-end/all-time roster).
+ * By default, each tournament's upsets are computed against that season's own
+ * "at the time" standings (season-reset). Pass `{ continuous: true }` to
+ * instead judge upsets against the continuous all-time standings as of that
+ * point (used when aggregating for the "All Time" view).
  * Returns { perChar, h2h, tournamentResults: [{name, result}] }
  */
-export async function loadAndAggregateAllTournaments(season, ctx) {
+export async function loadAndAggregateAllTournaments(season, ctx, opts = {}) {
+  const continuous = opts.continuous ?? false;
   const idx = await loadTournamentIndex(season);
   const files = idx.tournaments ?? [];
 
@@ -460,7 +493,9 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
   for (const file of files) {
     try {
       const text = await loadTournamentText(season, file);
-      const tourCtx = await contextForTournament(season, file, ctx);
+      const tourCtx = continuous
+        ? await contextForTournamentAllTime(season, file, ctx)
+        : await contextForTournament(season, file, ctx);
       const result = computeTournamentResults(text, tourCtx);
       tournamentResults.push({ name: file.replace(/\.txt$/i, ""), result });
       for (const [name, stats] of result.perChar) {
@@ -476,23 +511,24 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
 }
 
 /**
- * Loads and aggregates ALL seasons' data.
- * Uses the latest season's roster as the reference (for consistent rankings).
+ * Loads and aggregates ALL seasons' data using the continuous all-time
+ * standings (every tournament taken into account together, more recent
+ * seasons weighted slightly more heavily) as the reference for ranks/ratings
+ * and canonical names.
  * Returns { perChar, h2h, tournamentResults, ctx }
  */
 export async function loadAllSeasonsData(latestSeason) {
-  const ctx = await loadSeasonRoster(latestSeason);
+  const ctx = await loadAllTimesRoster();
   const perChar = new Map();
   const h2h = new Map();
   const tournamentResults = [];
 
   for (let s = 1; s <= latestSeason; s++) {
     try {
-      const sCtx = await loadSeasonRoster(s);
-      const agg = await loadAndAggregateAllTournaments(s, sCtx);
+      const agg = await loadAndAggregateAllTournaments(s, ctx, { continuous: true });
 
       for (const [name, stats] of agg.perChar) {
-        // Map to latest-season canonical name where possible
+        // Map to all-time canonical name where possible
         const key = canonKey(name);
         const canonName = ctx.displayByNameKey.get(key) ?? name;
         const elo = ctx.eloByNameKey.get(key) ?? stats.elo;
