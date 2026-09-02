@@ -258,7 +258,7 @@ function renderCharDetail() {
 
   const rosterEntry = currentCtx.roster.find((r) => r.name === charName);
   const stats = currentAgg.perChar.get(charName) ?? {
-    matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo: rosterEntry?.elo ?? null, expectedWins: 0,
+    matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo: rosterEntry?.elo ?? null,
   };
 
   const winRate = pct(stats.wins, stats.matches);

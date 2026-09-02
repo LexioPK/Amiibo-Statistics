@@ -6,7 +6,6 @@ import {
   loadAllSeasonsData,
   populateSeasonSelect,
   pct,
-  consistencyScore,
   iconPath,
 } from "./lib.js";
 
@@ -50,7 +49,7 @@ function buildStatsMapForRoster(roster, sourcePerChar) {
   const perChar = new Map();
   for (const r of roster) {
     const fromSrc = sourcePerChar.get(r.name);
-    perChar.set(r.name, fromSrc ?? { matches: 0, wins: 0, losses: 0, upsets: 0, elo: r.elo, expectedWins: 0 });
+    perChar.set(r.name, fromSrc ?? { matches: 0, wins: 0, losses: 0, upsets: 0, elo: r.elo });
   }
   return perChar;
 }
@@ -117,20 +116,11 @@ function renderStats(roster, perChar) {
   statsBody.innerHTML = "";
   for (const r of roster) {
     const st = perChar.get(r.name) ?? {
-      matches: 0, wins: 0, losses: 0, upsets: 0, elo: r.elo, expectedWins: 0,
+      matches: 0, wins: 0, losses: 0, upsets: 0, elo: r.elo,
     };
 
     const winPct = pct(st.wins, st.matches);
     const upsetPct = pct(st.upsets, st.wins);
-    const cs = consistencyScore(st.wins, st.matches, st.expectedWins);
-    const consistencyText = cs != null ? `${cs}%` : "—";
-
-    // Highlight over/under-performers
-    let perfClass = "";
-    if (cs != null) {
-      if (cs >= 80) perfClass = "perf-good";
-      else if (cs <= 40) perfClass = "perf-poor";
-    }
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -144,7 +134,6 @@ function renderStats(roster, perChar) {
       <td>${winPct}</td>
       <td>${st.upsets}</td>
       <td>${upsetPct}</td>
-      <td class="${perfClass}">${consistencyText}</td>
     `;
     statsBody.appendChild(tr);
   }

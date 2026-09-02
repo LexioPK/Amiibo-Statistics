@@ -13,6 +13,7 @@ import {
   norm,
   canonKey,
   resolveAlias,
+  isExcludedName,
   parseTournamentSections,
   parseCompetitorLine,
   loadTournamentIndex,
@@ -38,6 +39,7 @@ function extractMatchesInOrder(rawText) {
       if (!c1 || !c2) continue;
       if (c1.bye || c2.bye) continue;
       if (c1.score == null || c2.score == null) continue;
+      if (isExcludedName(c1.nameRaw) || isExcludedName(c2.nameRaw)) continue;
 
       const name1 = norm(resolveAlias(c1.nameRaw));
       const name2 = norm(resolveAlias(c2.nameRaw));
@@ -99,11 +101,16 @@ function snapshotOf(players) {
   return rows;
 }
 
+function tournamentKey(season, filename) {
+  return `${season}::${filename}`;
+}
+
 let historyPromise = null;
 
 async function buildHistory() {
   const players = new Map(); // canonKey -> { name, rating, rd, volatility, matches }
   const seasonSnapshots = new Map(); // season number -> snapshot rows
+  const tournamentPreSnapshots = new Map(); // "season::filename" -> snapshot rows (as of just before that tournament)
 
   for (let season = 1; season <= SEASON_COUNT; season++) {
     let files = [];
@@ -122,6 +129,10 @@ async function buildHistory() {
         console.warn(`Skipping ${file}:`, e.message);
         continue;
       }
+
+      // Snapshot ratings as of immediately before this tournament is applied,
+      // so per-tournament upset detection can use "at the time" standings.
+      tournamentPreSnapshots.set(tournamentKey(season, file), snapshotOf(players));
 
       const matches = extractMatchesInOrder(text);
       const participants = new Set();
@@ -143,7 +154,7 @@ async function buildHistory() {
     seasonSnapshots.set(season, snapshotOf(players));
   }
 
-  return { seasonSnapshots, finalSnapshot: snapshotOf(players) };
+  return { seasonSnapshots, finalSnapshot: snapshotOf(players), tournamentPreSnapshots };
 }
 
 function getHistory() {
@@ -161,4 +172,15 @@ export async function getSeasonRatings(season) {
 export async function getAllTimeRatings() {
   const history = await getHistory();
   return history.finalSnapshot;
+}
+
+/**
+ * Ratings as of immediately *before* the given tournament was played (i.e.
+ * excluding that tournament's own results and anything that happened after
+ * it). Players who hadn't competed in an earlier tournament are excluded, so
+ * upsets are never judged using data from later tournaments.
+ */
+export async function getRatingsBeforeTournament(season, filename) {
+  const history = await getHistory();
+  return history.tournamentPreSnapshots.get(tournamentKey(season, filename)) ?? [];
 }

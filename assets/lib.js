@@ -36,6 +36,18 @@ export function resolveAlias(nameRaw) {
   return HARDCODED_ALIASES.get(key) ?? nameRaw;
 }
 
+/**
+ * Names that are excluded from all rankings/stats entirely (e.g. entries that
+ * aren't actually amiibo characters). Matches involving an excluded name are
+ * skipped everywhere — ratings, win/loss counts, upsets — the same as a bye.
+ */
+const EXCLUDED_NAMES = new Set(["sean"]);
+
+/** True if nameRaw (after alias resolution) refers to an excluded name. */
+export function isExcludedName(nameRaw) {
+  return EXCLUDED_NAMES.has(canonKey(resolveAlias(nameRaw)));
+}
+
 export async function fetchText(url) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
@@ -66,6 +78,7 @@ function buildRosterContext(rows) {
 
   for (const row of rows) {
     const name = norm(row.name);
+    if (isExcludedName(name)) continue;
     const entry = { rank: row.rank ?? null, name, elo: row.rating, rd: row.rd };
     roster.push(entry);
 
@@ -231,10 +244,6 @@ export function parseCompetitorLine(line) {
   return { nameRaw, score, bye: false };
 }
 
-export function expectedWinProb(eloA, eloB) {
-  return 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
-}
-
 // ── Tournament result computation ────────────────────────────────────────────
 
 /**
@@ -244,6 +253,11 @@ export function expectedWinProb(eloA, eloB) {
  *     matches: [{winner, winnerScore, loser, loserScore, isUpset}],  ← flat, sorted
  *     sections: [{name, topN, sortKey, matches}],                    ← sorted for display
  *     perChar: Map, h2h: Map, unknownNames: string[] }
+ *
+ * `ctx.rankByNameKey` (and `ctx.eloByNameKey`) should reflect standings as of
+ * immediately *before* this tournament started, so that upsets are judged
+ * against the ranking at the time the tournament was played, not against
+ * ranking data from tournaments that happened afterwards.
  */
 export function computeTournamentResults(text, ctx) {
   const rawSections = parseTournamentSections(text);
@@ -258,7 +272,7 @@ export function computeTournamentResults(text, ctx) {
 
   function ensure(displayName, elo) {
     if (!perChar.has(displayName)) {
-      perChar.set(displayName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo: elo ?? null, expectedWins: 0 });
+      perChar.set(displayName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo: elo ?? null });
     }
     return perChar.get(displayName);
   }
@@ -291,6 +305,7 @@ export function computeTournamentResults(text, ctx) {
       if (!c1 || !c2) continue;
 
       if (c1.bye || c2.bye) { matchesIgnoredBye++; continue; }
+      if (isExcludedName(c1.nameRaw) || isExcludedName(c2.nameRaw)) { matchesIgnoredBye++; continue; }
       if (c1.score == null || c2.score == null) { matchesSkippedNoScore++; continue; }
 
       const d1 = toDisplay(c1.nameRaw);
@@ -316,12 +331,6 @@ export function computeTournamentResults(text, ctx) {
       ensure(loser.name, loser.elo).losses++;
       matchesCounted++;
 
-      if (elo1 != null && elo2 != null) {
-        const p1wins = expectedWinProb(elo1, elo2);
-        e1.expectedWins += p1wins;
-        e2.expectedWins += (1 - p1wins);
-      }
-
       const a = d1 < d2 ? d1 : d2;
       const b = d1 < d2 ? d2 : d1;
       const h2hKey = `${a}__${b}`;
@@ -332,7 +341,8 @@ export function computeTournamentResults(text, ctx) {
 
       let isUpset = false;
       if (winner.rank != null && loser.rank != null) {
-        // Upset: winner is ranked at least `threshold` spots below the loser.
+        // Upset: winner is ranked at least `threshold` spots below the loser,
+        // using standings as of immediately before this tournament.
         // For top-10 losers the bar is lower (5 spots); otherwise 10 spots.
         const threshold = loser.rank <= 10 ? 5 : 10;
         if (winner.rank - loser.rank >= threshold) {
@@ -376,10 +386,45 @@ export function computeTournamentResults(text, ctx) {
   };
 }
 
+
 // ── Aggregation ───────────────────────────────────────────────────────────────
 
 /**
+ * Builds a copy of `ctx` whose rank/rating lookups reflect standings as of
+ * immediately *before* the given tournament (rather than the season-end or
+ * all-time snapshot), so upsets are judged against "at the time" rankings.
+ * Name-display lookups (`displayByNameKey`) are left untouched since those
+ * are just alias→canonical-name mappings, not point-in-time standings.
+ */
+async function contextForTournament(season, filename, baseCtx) {
+  const { getRatingsBeforeTournament } = await import("./rating-engine.js");
+  const rows = await getRatingsBeforeTournament(season, filename);
+
+  const rankByNameKey = new Map();
+  const eloByNameKey = new Map(baseCtx.eloByNameKey);
+  for (const row of rows) {
+    const key = canonKey(row.name);
+    rankByNameKey.set(key, row.rank);
+    eloByNameKey.set(key, row.rating);
+  }
+
+  return { ...baseCtx, rankByNameKey, eloByNameKey };
+}
+
+/**
+ * Loads the roster context to use for a single tournament: display names come
+ * from the season roster, but rank/rating reflect standings immediately
+ * before that tournament was played (see `contextForTournament`).
+ */
+export async function loadTournamentRosterContext(season, filename, baseCtx) {
+  const ctx = baseCtx ?? await loadSeasonRoster(season);
+  return contextForTournament(season, filename, ctx);
+}
+
+/**
  * Loads all tournaments for one season and aggregates per-character + h2h data.
+ * Each tournament's upsets are computed against standings as of immediately
+ * before that tournament (not the season-end/all-time roster).
  * Returns { perChar, h2h, tournamentResults: [{name, result}] }
  */
 export async function loadAndAggregateAllTournaments(season, ctx) {
@@ -392,7 +437,7 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
 
   function mergeChar(name, elo, src) {
     if (!perChar.has(name)) {
-      perChar.set(name, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo, expectedWins: 0 });
+      perChar.set(name, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo });
     }
     const dst = perChar.get(name);
     dst.matches += src.matches;
@@ -400,7 +445,6 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
     dst.losses += src.losses;
     dst.upsets += src.upsets;
     dst.upsetLosses += (src.upsetLosses ?? 0);
-    dst.expectedWins += src.expectedWins;
   }
 
   function mergeH2H(srcMap) {
@@ -416,7 +460,8 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
   for (const file of files) {
     try {
       const text = await loadTournamentText(season, file);
-      const result = computeTournamentResults(text, ctx);
+      const tourCtx = await contextForTournament(season, file, ctx);
+      const result = computeTournamentResults(text, tourCtx);
       tournamentResults.push({ name: file.replace(/\.txt$/i, ""), result });
       for (const [name, stats] of result.perChar) {
         mergeChar(name, stats.elo, stats);
@@ -453,7 +498,7 @@ export async function loadAllSeasonsData(latestSeason) {
         const elo = ctx.eloByNameKey.get(key) ?? stats.elo;
 
         if (!perChar.has(canonName)) {
-          perChar.set(canonName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo, expectedWins: 0 });
+          perChar.set(canonName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo });
         }
         const dst = perChar.get(canonName);
         dst.matches += stats.matches;
@@ -461,7 +506,6 @@ export async function loadAllSeasonsData(latestSeason) {
         dst.losses += stats.losses;
         dst.upsets += stats.upsets;
         dst.upsetLosses += (stats.upsetLosses ?? 0);
-        dst.expectedWins += stats.expectedWins;
       }
 
       for (const [key2, row] of agg.h2h) {
@@ -525,13 +569,4 @@ export function portraitPath(name) {
 export function pct(n, d) {
   if (!d) return "—";
   return (n / d * 100).toFixed(1) + "%";
-}
-
-/** Compute consistency score (0–100) for a character. */
-export function consistencyScore(wins, matches, expectedWins) {
-  if (!matches) return null;
-  const actualRate = wins / matches;
-  const expectedRate = expectedWins / matches;
-  const diff = Math.abs(actualRate - expectedRate);
-  return Math.max(0, Math.round((1 - diff * 2) * 100));
 }

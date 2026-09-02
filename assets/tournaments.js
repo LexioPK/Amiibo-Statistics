@@ -1,8 +1,8 @@
 import {
   SEASON_COUNT,
-  loadSeasonRoster,
   loadTournamentIndex,
   loadTournamentText,
+  loadTournamentRosterContext,
   computeTournamentResults,
   populateSeasonSelect,
   iconPath,
@@ -91,8 +91,9 @@ async function loadTournament(season, filename) {
   setStatus(`Loading ${filename.replace(/\.txt$/i, "")}…`);
   clearResults();
   try {
-    // Always load the correct season's roster for name resolution
-    const ctx = await loadSeasonRoster(season);
+    // Ranks/ratings reflect standings immediately before this tournament,
+    // so upsets are judged "at the time", not using later results.
+    const ctx = await loadTournamentRosterContext(season, filename);
     const text = await loadTournamentText(season, filename);
     const state = computeTournamentResults(text, ctx);
     renderResults(state);
