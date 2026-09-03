@@ -134,7 +134,7 @@ function tournamentKey(season, filename) {
  * contributed. Not drastic: season 1 is baseline (1.0x), and weight grows by
  * a fixed step per season (season SEASON_COUNT is at most ~1.3x baseline).
  */
-const SEASON_WEIGHT_STEP = 0.04;
+const SEASON_WEIGHT_STEP = 0.03;
 function seasonWeight(season) {
   return 1 + SEASON_WEIGHT_STEP * (season - 1);
 }
