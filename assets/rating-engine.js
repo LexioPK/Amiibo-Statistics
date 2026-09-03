@@ -131,12 +131,54 @@ function tournamentKey(season, filename) {
  * all-time replay: each season's matches count slightly more than the
  * previous season's, so recent performance moves the all-time rating more
  * than older performance — without diminishing what earlier seasons already
- * contributed. Not drastic: season 1 is baseline (1.0x), and weight grows by
- * a fixed step per season (season SEASON_COUNT is at most ~1.3x baseline).
+ * contributed.
+ *
+ * Weights are expressed as percentages of a 100% pool split across every
+ * season (1..SEASON_COUNT), so they always sum to exactly 100% no matter how
+ * many seasons exist — adding a new season automatically re-splits the pool
+ * rather than requiring any manual re-tuning.
+ *
+ * Each season's raw share grows by a fixed, mild step over the previous
+ * season's (not drastic: season 1 gets the smallest share, the latest season
+ * gets the largest, but the spread stays bounded), then everything is
+ * normalized to add up to 100%. The percentage is then rescaled by
+ * SEASON_COUNT so the *average* per-match weight across all seasons stays
+ * anchored at 1x — this keeps the magnitude of rating changes consistent as
+ * seasons are added, while the 100%-sum breakdown (`seasonWeightPercentages`)
+ * always reflects each season's relative share of total influence.
  */
 const SEASON_WEIGHT_STEP = 0.03;
-function seasonWeight(season) {
+
+function rawSeasonWeight(season) {
   return 1 + SEASON_WEIGHT_STEP * (season - 1);
+}
+
+/**
+ * Returns each season's weight as a percentage (0-100) of the total
+ * recency-weight pool across seasons 1..seasonCount. Always sums to 100
+ * (within floating-point rounding), and automatically re-splits as
+ * `seasonCount` grows.
+ */
+function seasonWeightPercentages(seasonCount) {
+  const raws = [];
+  let total = 0;
+  for (let s = 1; s <= seasonCount; s++) {
+    const r = rawSeasonWeight(s);
+    raws.push(r);
+    total += r;
+  }
+  return raws.map((r) => (r / total) * 100);
+}
+
+/**
+ * The multiplier applied to a match's rating-change impact for each season,
+ * derived from that season's percentage share of the total pool (see
+ * `seasonWeightPercentages`), rescaled so the average weight across all
+ * seasons stays at 1x regardless of how many seasons exist. Index 0 = season 1.
+ */
+function seasonWeightMultipliers(seasonCount) {
+  const percentages = seasonWeightPercentages(seasonCount);
+  return percentages.map((pct) => (pct / 100) * seasonCount);
 }
 
 /**
@@ -150,17 +192,19 @@ function seasonWeight(season) {
  *
  * If `resetPerSeason` is false, `players` persists across every season with
  * no resets (the continuous "All Time" replay), and each match's rating
- * impact is scaled by `seasonWeight(season)` so more recent seasons carry
- * slightly more weight without erasing earlier results.
+ * impact is scaled by that season's weight multiplier (see
+ * `seasonWeightMultipliers`) so more recent seasons carry slightly more
+ * weight without erasing earlier results.
  */
 async function replayAll({ resetPerSeason }) {
   let players = new Map(); // canonKey -> { name, rating, rd, volatility, matches }
   const seasonSnapshots = new Map(); // season number -> snapshot rows
   const tournamentPreSnapshots = new Map(); // "season::filename" -> snapshot rows (as of just before that tournament)
+  const weightMultipliers = resetPerSeason ? null : seasonWeightMultipliers(SEASON_COUNT);
 
   for (let season = 1; season <= SEASON_COUNT; season++) {
     if (resetPerSeason) players = new Map();
-    const weight = resetPerSeason ? 1 : seasonWeight(season);
+    const weight = resetPerSeason ? 1 : weightMultipliers[season - 1];
 
     let files = [];
     try {
@@ -233,11 +277,22 @@ export async function getSeasonRatings(season) {
 /**
  * All-time ratings from the single continuous replay across every recorded
  * tournament (no resets), with more recent seasons weighted slightly more
- * heavily (see `seasonWeight`).
+ * heavily (see `seasonWeightPercentages`/`seasonWeightMultipliers`).
  */
 export async function getAllTimeRatings() {
   const history = await getContinuousHistory();
   return history.finalSnapshot;
+}
+
+/**
+ * Returns each season's recency-weight share as a percentage (0-100) of the
+ * total pool used for the continuous all-time replay, e.g.
+ * `[{ season: 1, percent: 13.1 }, { season: 2, percent: 13.5 }, ...]`.
+ * These always sum to 100 (within floating-point rounding) and automatically
+ * re-split whenever SEASON_COUNT grows.
+ */
+export function getSeasonWeightBreakdown() {
+  return seasonWeightPercentages(SEASON_COUNT).map((percent, i) => ({ season: i + 1, percent }));
 }
 
 /**
