@@ -5,15 +5,19 @@
 // order (season 1 → SEASON_COUNT, tournaments within a season in their listed
 // order), updating each amiibo's Glicko-2 rating/RD/volatility as we go.
 //
-// Two independent replays are maintained:
-//   - A "season-reset" replay: every player starts fresh from the standard
-//     starting rating/RD at the beginning of each season, so a season's
-//     standings only ever reflect that season's own matches. This backs the
-//     per-season pages/rosters and only includes players who actually
-//     competed that season.
-//   - A single continuous replay across every tournament ever recorded, with
-//     no resets, which backs the "All Time" pages so they take every
-//     tournament into account together.
+// A single "season-reset" replay is maintained: every player starts fresh
+// from the standard starting rating/RD at the beginning of each season, so a
+// season's standings only ever reflect that season's own matches. This backs
+// the per-season pages/rosters (only players who actually competed that
+// season appear).
+//
+// The "All Time" rating is derived from that same replay as a weighted
+// average of each player's per-season Glicko-2 rating: every season they
+// competed in contributes its own final (or, mid-season, "as of now") rating,
+// weighted so more recent seasons count more heavily (see
+// `computeSeasonWeights`). Seasons a player didn't compete in simply don't
+// contribute — never diminishing seasons they did play, and never inventing
+// results for seasons before they joined.
 
 import {
   SEASON_COUNT,
@@ -72,13 +76,8 @@ function ensurePlayer(players, key, name) {
   return players.get(key);
 }
 
-/** Applies one match's result to both players' ratings (using pre-match snapshots for both).
- * `weight` (default 1) scales how much this match's *rating* change counts —
- * used to give more recent seasons slightly more influence on the continuous
- * all-time rating without touching RD/volatility (uncertainty) tracking or
- * retroactively altering what earlier matches already contributed.
- */
-function applyMatch(players, match, weight = 1) {
+/** Applies one match's result to both players' ratings (using pre-match snapshots for both). */
+function applyMatch(players, match) {
   const winner = ensurePlayer(players, match.winnerKey, match.winnerName);
   const loser = ensurePlayer(players, match.loserKey, match.loserName);
 
@@ -91,17 +90,8 @@ function applyMatch(players, match, weight = 1) {
   const winnerPost = updateForMatch(winnerPre, loserPre, winnerValue);
   const loserPost = updateForMatch(loserPre, winnerPre, loserValue);
 
-  if (weight === 1) {
-    Object.assign(winner, winnerPost);
-    Object.assign(loser, loserPost);
-  } else {
-    winner.rating = winnerPre.rating + weight * (winnerPost.rating - winnerPre.rating);
-    winner.rd = winnerPost.rd;
-    winner.volatility = winnerPost.volatility;
-    loser.rating = loserPre.rating + weight * (loserPost.rating - loserPre.rating);
-    loser.rd = loserPost.rd;
-    loser.volatility = loserPost.volatility;
-  }
+  Object.assign(winner, winnerPost);
+  Object.assign(loser, loserPost);
   winner.matches += 1;
   loser.matches += 1;
 }
@@ -122,89 +112,118 @@ function snapshotOf(players) {
   return rows;
 }
 
+/** Raw (unrounded) copy of every player who has played at least one match so far, keyed by canonKey. */
+function rawSnapshotOf(players) {
+  const map = new Map();
+  for (const [key, p] of players) {
+    if (p.matches > 0) {
+      map.set(key, { name: p.name, rating: p.rating, rd: p.rd, matches: p.matches });
+    }
+  }
+  return map;
+}
+
 function tournamentKey(season, filename) {
   return `${season}::${filename}`;
 }
 
 /**
- * Recency weight applied to a match's *rating* impact in the continuous
- * all-time replay: each season's matches count slightly more than the
- * previous season's, so recent performance moves the all-time rating more
- * than older performance — without diminishing what earlier seasons already
- * contributed.
+ * Computes each season's weight as a percentage (0-100) of a 100% pool split
+ * across seasons 1..seasonCount, used to weight that season's rating when
+ * averaging into the "All Time" rating.
  *
- * Weights are expressed as percentages of a 100% pool split across every
- * season (1..SEASON_COUNT), so they always sum to exactly 100% no matter how
- * many seasons exist — adding a new season automatically re-splits the pool
- * rather than requiring any manual re-tuning.
+ * The weights increase linearly from season 1 to the newest season, with the
+ * newest season weighted exactly twice as heavily as season 1, and always
+ * summing to exactly 100% — regardless of how many seasons exist, so adding
+ * a new season automatically re-splits the pool with no manual re-tuning.
  *
- * Each season's raw share grows by a fixed, mild step over the previous
- * season's (not drastic: season 1 gets the smallest share, the latest season
- * gets the largest, but the spread stays bounded), then everything is
- * normalized to add up to 100%. The percentage is then rescaled by
- * SEASON_COUNT so the *average* per-match weight across all seasons stays
- * anchored at 1x — this keeps the magnitude of rating changes consistent as
- * seasons are added, while the 100%-sum breakdown (`seasonWeightPercentages`)
- * always reflects each season's relative share of total influence.
+ * Derivation: for an arithmetic sequence w_i = a + (i-1)*d (i = 1..N) with
+ * w_N = 2*a (newest twice season 1) and sum(w_i) = 100, solving gives
+ * a = 200 / (3N) and d = a / (N-1).
  */
-const SEASON_WEIGHT_STEP = 0.03;
+function computeSeasonWeights(seasonCount) {
+  if (seasonCount <= 0) return [];
+  if (seasonCount === 1) return [100];
 
-function rawSeasonWeight(season) {
-  return 1 + SEASON_WEIGHT_STEP * (season - 1);
+  const a = 200 / (3 * seasonCount);
+  const d = a / (seasonCount - 1);
+  const weights = [];
+  for (let i = 1; i <= seasonCount; i++) weights.push(a + (i - 1) * d);
+  return weights;
 }
 
 /**
- * Returns each season's weight as a percentage (0-100) of the total
- * recency-weight pool across seasons 1..seasonCount. Always sums to 100
- * (within floating-point rounding), and automatically re-splits as
- * `seasonCount` grows.
+ * Combines multiple seasons' raw rating maps into one weighted-average
+ * ranked snapshot. `seasonEntries` is an array of `{ season, map }` pairs
+ * (map may be undefined/missing if that season has no data yet); `weights`
+ * is indexed by `season - 1` (see `computeSeasonWeights`).
+ *
+ * For each player, only the seasons they actually have an entry for
+ * contribute to their weighted average — seasons they didn't compete in are
+ * simply excluded (not treated as a zero), so missing earlier seasons never
+ * drag down a newer player's rating, and missing later seasons never
+ * penalize a retired player.
  */
-function seasonWeightPercentages(seasonCount) {
-  const raws = [];
-  let total = 0;
-  for (let s = 1; s <= seasonCount; s++) {
-    const r = rawSeasonWeight(s);
-    raws.push(r);
-    total += r;
+function weightedAverageAcrossSeasons(seasonEntries, weights) {
+  const combined = new Map(); // key -> { name, ratingSum, rdSum, weightSum, matches }
+
+  for (const { season, map } of seasonEntries) {
+    if (!map) continue;
+    const w = weights[season - 1] ?? 0;
+    if (w <= 0) continue;
+
+    for (const [key, p] of map) {
+      let entry = combined.get(key);
+      if (!entry) {
+        entry = { name: p.name, ratingSum: 0, rdSum: 0, weightSum: 0, matches: 0 };
+        combined.set(key, entry);
+      }
+      entry.ratingSum += p.rating * w;
+      entry.rdSum += p.rd * w;
+      entry.weightSum += w;
+      entry.matches += p.matches;
+    }
   }
-  return raws.map((r) => (r / total) * 100);
-}
 
-/**
- * The multiplier applied to a match's rating-change impact for each season,
- * derived from that season's percentage share of the total pool (see
- * `seasonWeightPercentages`), rescaled so the average weight across all
- * seasons stays at 1x regardless of how many seasons exist. Index 0 = season 1.
- */
-function seasonWeightMultipliers(seasonCount) {
-  const percentages = seasonWeightPercentages(seasonCount);
-  return percentages.map((pct) => (pct / 100) * seasonCount);
+  const rows = [];
+  for (const entry of combined.values()) {
+    if (entry.weightSum <= 0) continue;
+    rows.push({
+      name: entry.name,
+      rating: Math.round(entry.ratingSum / entry.weightSum),
+      rd: Math.round(entry.rdSum / entry.weightSum),
+      matches: entry.matches,
+    });
+  }
+
+  rows.sort((a, b) => {
+    if (b.rating !== a.rating) return b.rating - a.rating;
+    return a.rd - b.rd; // lower RD (more confidence) wins ties
+  });
+  rows.forEach((row, i) => { row.rank = i + 1; });
+  return rows;
 }
 
 /**
  * Replays every tournament from season 1..SEASON_COUNT in chronological
- * order, applying matches to a shared `players` map.
+ * order. `players` is reset at the start of each season so that season's
+ * standings only reflect its own matches (everyone effectively starts from
+ * the standard starting rating/RD again).
  *
- * If `resetPerSeason` is true, `players` is cleared at the start of each
- * season so that season's standings only reflect its own matches (everyone
- * effectively starts from the standard starting rating/RD again) — used for
- * the per-season pages/rosters.
- *
- * If `resetPerSeason` is false, `players` persists across every season with
- * no resets (the continuous "All Time" replay), and each match's rating
- * impact is scaled by that season's weight multiplier (see
- * `seasonWeightMultipliers`) so more recent seasons carry slightly more
- * weight without erasing earlier results.
+ * Records, per season: a ranked snapshot (for per-season pages) and a raw
+ * (unrounded) map (for weighted-averaging into the "All Time" rating); and
+ * per tournament: the same pair, captured immediately *before* that
+ * tournament's matches are applied (for "at the time" upset detection).
  */
-async function replayAll({ resetPerSeason }) {
+async function buildHistory() {
   let players = new Map(); // canonKey -> { name, rating, rd, volatility, matches }
-  const seasonSnapshots = new Map(); // season number -> snapshot rows
-  const tournamentPreSnapshots = new Map(); // "season::filename" -> snapshot rows (as of just before that tournament)
-  const weightMultipliers = resetPerSeason ? null : seasonWeightMultipliers(SEASON_COUNT);
+  const seasonSnapshots = new Map(); // season number -> ranked snapshot rows
+  const seasonRawMaps = new Map(); // season number -> raw rating map (for weighted averaging)
+  const tournamentPreSnapshots = new Map(); // "season::filename" -> ranked rows (as of just before that tournament)
+  const tournamentPreRawMaps = new Map(); // "season::filename" -> raw rating map (as of just before that tournament)
 
   for (let season = 1; season <= SEASON_COUNT; season++) {
-    if (resetPerSeason) players = new Map();
-    const weight = resetPerSeason ? 1 : weightMultipliers[season - 1];
+    players = new Map();
 
     let files = [];
     try {
@@ -225,42 +244,39 @@ async function replayAll({ resetPerSeason }) {
 
       // Snapshot ratings as of immediately before this tournament is applied,
       // so per-tournament upset detection can use "at the time" standings.
-      tournamentPreSnapshots.set(tournamentKey(season, file), snapshotOf(players));
+      const key = tournamentKey(season, file);
+      tournamentPreSnapshots.set(key, snapshotOf(players));
+      tournamentPreRawMaps.set(key, rawSnapshotOf(players));
 
       const matches = extractMatchesInOrder(text);
       const participants = new Set();
       for (const m of matches) {
         participants.add(m.winnerKey);
         participants.add(m.loserKey);
-        applyMatch(players, m, weight);
+        applyMatch(players, m);
       }
 
       // Inactivity: everyone already known who didn't play this tournament
       // becomes less certain (higher RD), without any direct rating penalty.
-      for (const [key, p] of players) {
-        if (participants.has(key)) continue;
+      for (const [pkey, p] of players) {
+        if (participants.has(pkey)) continue;
         const inflated = inflateForInactivity({ rating: p.rating, rd: p.rd, volatility: p.volatility });
         p.rd = inflated.rd;
       }
     }
 
     seasonSnapshots.set(season, snapshotOf(players));
+    seasonRawMaps.set(season, rawSnapshotOf(players));
   }
 
-  return { seasonSnapshots, finalSnapshot: snapshotOf(players), tournamentPreSnapshots };
+  return { seasonSnapshots, seasonRawMaps, tournamentPreSnapshots, tournamentPreRawMaps };
 }
 
-let seasonResetHistoryPromise = null;
-let continuousHistoryPromise = null;
+let historyPromise = null;
 
-function getSeasonResetHistory() {
-  if (!seasonResetHistoryPromise) seasonResetHistoryPromise = replayAll({ resetPerSeason: true });
-  return seasonResetHistoryPromise;
-}
-
-function getContinuousHistory() {
-  if (!continuousHistoryPromise) continuousHistoryPromise = replayAll({ resetPerSeason: false });
-  return continuousHistoryPromise;
+function getHistory() {
+  if (!historyPromise) historyPromise = buildHistory();
+  return historyPromise;
 }
 
 /**
@@ -270,29 +286,39 @@ function getContinuousHistory() {
  * season are excluded (never carried over from earlier or later seasons).
  */
 export async function getSeasonRatings(season) {
-  const history = await getSeasonResetHistory();
+  const history = await getHistory();
   return history.seasonSnapshots.get(season) ?? [];
 }
 
 /**
- * All-time ratings from the single continuous replay across every recorded
- * tournament (no resets), with more recent seasons weighted slightly more
- * heavily (see `seasonWeightPercentages`/`seasonWeightMultipliers`).
+ * All-time ratings: a weighted average of each player's per-season final
+ * Glicko-2 rating, across every season they competed in, with more recent
+ * seasons weighted more heavily (see `computeSeasonWeights` — the newest
+ * season counts exactly twice as much as season 1, and all seasons' weights
+ * sum to 100%). Seasons a player didn't compete in are simply excluded from
+ * their average, so missing seasons never drag a rating down or invent
+ * results before a player joined.
  */
 export async function getAllTimeRatings() {
-  const history = await getContinuousHistory();
-  return history.finalSnapshot;
+  const history = await getHistory();
+  const weights = computeSeasonWeights(SEASON_COUNT);
+  const seasonEntries = [];
+  for (let s = 1; s <= SEASON_COUNT; s++) {
+    seasonEntries.push({ season: s, map: history.seasonRawMaps.get(s) });
+  }
+  return weightedAverageAcrossSeasons(seasonEntries, weights);
 }
 
 /**
- * Returns each season's recency-weight share as a percentage (0-100) of the
- * total pool used for the continuous all-time replay, e.g.
- * `[{ season: 1, percent: 13.1 }, { season: 2, percent: 13.5 }, ...]`.
- * These always sum to 100 (within floating-point rounding) and automatically
- * re-split whenever SEASON_COUNT grows.
+ * Returns each season's recency weight as a percentage (0-100) of the total
+ * pool used to compute the "All Time" weighted average, e.g.
+ * `[{ season: 1, percent: 9.5 }, ..., { season: 7, percent: 19.0 }]`.
+ * Always sums to 100 (within floating-point rounding), with the newest
+ * season weighted exactly twice season 1, and automatically re-splits
+ * whenever SEASON_COUNT grows.
  */
 export function getSeasonWeightBreakdown() {
-  return seasonWeightPercentages(SEASON_COUNT).map((percent, i) => ({ season: i + 1, percent }));
+  return computeSeasonWeights(SEASON_COUNT).map((percent, i) => ({ season: i + 1, percent }));
 }
 
 /**
@@ -303,18 +329,27 @@ export function getSeasonWeightBreakdown() {
  * standings.
  */
 export async function getSeasonRatingsBeforeTournament(season, filename) {
-  const history = await getSeasonResetHistory();
+  const history = await getHistory();
   return history.tournamentPreSnapshots.get(tournamentKey(season, filename)) ?? [];
 }
 
 /**
- * Continuous all-time ratings as of immediately *before* the given
- * tournament (excluding that tournament's own results and anything after
- * it, across every season). Used so the "All Time" view's upsets are judged
- * against the full cross-season history at that point, not a per-season
- * reset.
+ * "All Time" weighted-average ratings as of immediately *before* the given
+ * tournament: every earlier season contributes its final rating, and the
+ * tournament's own (in-progress) season contributes its "as of now" rating,
+ * each weighted per `computeSeasonWeights` — excluding that tournament's own
+ * results and anything from later seasons. Used so the "All Time" view's
+ * upsets are judged against the weighted history at that point, not a
+ * completed-season snapshot.
  */
 export async function getAllTimeRatingsBeforeTournament(season, filename) {
-  const history = await getContinuousHistory();
-  return history.tournamentPreSnapshots.get(tournamentKey(season, filename)) ?? [];
+  const history = await getHistory();
+  const weights = computeSeasonWeights(SEASON_COUNT);
+  const seasonEntries = [];
+  for (let s = 1; s < season; s++) {
+    seasonEntries.push({ season: s, map: history.seasonRawMaps.get(s) });
+  }
+  seasonEntries.push({ season, map: history.tournamentPreRawMaps.get(tournamentKey(season, filename)) });
+  return weightedAverageAcrossSeasons(seasonEntries, weights);
 }
+
