@@ -351,12 +351,12 @@ async function buildAllTimeChartData(charName) {
     for (const file of files) {
       const rows = await getAllTimeRatingsBeforeTournament(season, file);
       const row = rows.find((r) => canonKey(r.name) === key);
-      if (row) pts.push({ label: `S${season} — ${file.replace(/\.txt$/i, "")}`, rating: row.rating });
+      if (row) pts.push({ label: `S${season} — ${file.replace(/\.txt$/i, "")}`, rank: row.rank, total: rows.length });
     }
   }
   if (!pts.length) return null;
   const final = (await getAllTimeRatings()).find((r) => canonKey(r.name) === key);
-  if (final) pts.push({ label: "Current", rating: final.rating });
+  if (final) pts.push({ label: "Current", rank: final.rank });
   return { season: null, points: pts };
 }
 
@@ -370,15 +370,18 @@ async function buildChartData(charName) {
     : [currentSeasonNum];
   for (const season of seasons) {
     try {
-      const { initialRating, points } = await getSeasonTimeline(season);
-      const pts = [{ label: "Start", rating: initialRating }];
+      const { points } = await getSeasonTimeline(season);
+      const pts = [];
       let played = false;
       for (const p of points) {
         const r = p.ratings.get(key);
-        if (r) {
-          played = true;
-          pts.push({ label: p.file.replace(/\.txt$/i, ""), rating: r.rating });
+        if (!r) continue;
+        played = true;
+        let above = 0;
+        for (const o of p.ratings.values()) {
+          if (o.rating > r.rating || (o.rating === r.rating && o.rd < r.rd)) above++;
         }
+        pts.push({ label: p.file.replace(/\.txt$/i, ""), rank: above + 1 });
       }
       if (played) return { season, points: pts };
     } catch (e) {
@@ -390,33 +393,32 @@ async function buildChartData(charName) {
 
 function buildRatingChartCard(data) {
   if (!data || data.points.length < 2) {
-    return `<div class="card rating-chart-card"><h2>Rating Over the Season</h2><p class="muted">No rating data available.</p></div>`;
+    return `<div class="card rating-chart-card"><h2>Rank Over Time</h2><p class="muted">No rank data available.</p></div>`;
   }
   const W = 560, H = 220, L = 40, R = 14, T = 12, B = 26;
-  const ys = data.points.map((p) => p.rating);
-  let min = Math.min(...ys), max = Math.max(...ys);
-  if (max - min < 40) { min -= 20; max += 20; }
-  const pad = (max - min) * 0.1;
-  min -= pad; max += pad;
+  const ys = data.points.map((p) => p.rank);
+  let min = Math.max(1, Math.min(...ys) - 1), max = Math.max(...ys) + 1;
+  if (max - min < 4) max = min + 4;
   const n = data.points.length;
   const x = (i) => L + (n === 1 ? 0 : (i / (n - 1)) * (W - L - R));
-  const y = (v) => T + (1 - (v - min) / (max - min)) * (H - T - B);
-  const path = data.points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.rating).toFixed(1)}`).join(" ");
+  // Rank 1 is drawn at the top
+  const y = (v) => T + ((v - min) / (max - min)) * (H - T - B);
+  const path = data.points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.rank).toFixed(1)}`).join(" ");
   let grid = "";
   for (let i = 0; i <= 4; i++) {
-    const v = min + ((max - min) * i) / 4;
-    grid += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="chart-grid"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" class="chart-axis" text-anchor="end">${Math.round(v)}</text>`;
+    const v = Math.round(min + ((max - min) * i) / 4);
+    grid += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="chart-grid"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" class="chart-axis" text-anchor="end">#${v}</text>`;
   }
-  const dots = data.points.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.rating).toFixed(1)}" r="${n > 40 ? 2 : 3.5}" class="chart-dot"><title>${p.label}: ${Math.round(p.rating)}</title></circle>`).join("");
+  const dots = data.points.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.rank).toFixed(1)}" r="${n > 40 ? 2 : 3.5}" class="chart-dot"><title>${p.label}: #${p.rank}</title></circle>`).join("");
   const last = data.points[n - 1];
   return `
     <div class="card rating-chart-card">
-      <h2>${data.season == null ? "Rating Over All Tournaments" : `Rating Over Season ${data.season}`}</h2>
-      <svg class="rating-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rating over the season">
+      <h2>${data.season == null ? "Rank Over All Tournaments" : `Rank Over Season ${data.season}`}</h2>
+      <svg class="rating-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rank over time">
         ${grid}
         <path d="${path}" class="chart-line"/>
         ${dots}
-        <text x="${W - R}" y="${H - 6}" class="chart-axis" text-anchor="end">Latest: ${Math.round(last.rating)} · ${data.season == null ? n - 1 : n - 1} tournament${n - 1 !== 1 ? "s" : ""}</text>
+        <text x="${W - R}" y="${H - 6}" class="chart-axis" text-anchor="end">Latest: #${last.rank} · ${n} tournament${n !== 1 ? "s" : ""}</text>
       </svg>
     </div>`;
 }
