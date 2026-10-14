@@ -195,19 +195,16 @@ function buildPlacementsCard(tournamentResults, charName) {
   return `<div class="card placements-card"><h2>Placements</h2><div class="placement-list">${rows}</div>${totalNote}</div>`;
 }
 
-/**
- * Returns 1, 2, or 3 if charName is in the top-3 for the given stat
- * (higher = better), or null otherwise. Ties are treated inclusively
- * (e.g. if two chars share the top score, both get rank 1).
- */
+/** Rank (1 = highest) of charName for a stat; ties share a rank. Null if no data. */
 function getStatRank(charName, stat, perChar) {
-  const val = perChar.get(charName)?.[stat] ?? 0;
-  if (!val) return null;
+  const entry = perChar.get(charName);
+  if (!entry) return null;
+  const val = entry[stat] ?? 0;
   let above = 0;
   for (const [name, s] of perChar) {
     if (name !== charName && (s[stat] ?? 0) > val) above++;
   }
-  return above < 3 ? above + 1 : null;
+  return above + 1;
 }
 
 /** Win-rate rank (requires at least 1 match). */
@@ -219,7 +216,11 @@ function getWinRateRank(charName, perChar) {
   for (const [name, s] of perChar) {
     if (name !== charName && s.matches > 0 && (s.wins / s.matches) > val) above++;
   }
-  return above < 3 ? above + 1 : null;
+  return above + 1;
+}
+
+function rankBadge(rank) {
+  return rank ? `<span class="stat-rank">#${rank}</span>` : "";
 }
 
 function medalClass(rank) {
@@ -281,6 +282,8 @@ function renderCharDetail() {
   const winsRank    = getStatRank(charName, "wins", currentAgg.perChar);
   const upsetsRank  = getStatRank(charName, "upsets", currentAgg.perChar);
   const matchesRank = getStatRank(charName, "matches", currentAgg.perChar);
+  const lossesRank  = getStatRank(charName, "losses", currentAgg.perChar);
+  const upsetLossesRank = getStatRank(charName, "upsetLosses", currentAgg.perChar);
   const winRateRank = getWinRateRank(charName, currentAgg.perChar);
 
   // Players not yet faced
@@ -291,31 +294,37 @@ function renderCharDetail() {
     <div class="char-detail-header card">
       <img class="char-portrait" src="${portraitPath(charName)}" alt="${charName}" onerror="this.style.display='none'">
       <div class="char-detail-info">
-        <div class="char-detail-name">${charName}</div>
-        <div class="char-detail-rank muted">${rosterEntry ? `Rank #${rosterEntry.rank ?? "?"} · ${rosterEntry.elo} Elo` : ""}</div>
+        <div class="char-detail-name">${charName}${rosterEntry?.rank != null ? ` <span class="char-detail-name-rank">#${rosterEntry.rank}</span>` : ""}</div>
+        <div class="char-detail-rank muted">${rosterEntry ? `${rosterEntry.elo} Elo` : ""}</div>
         <div class="char-detail-stats-grid">
           <div class="char-stat-block${medalClass(winRateRank)}">
-            <div class="char-stat-val">${winRate}${winRateRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][winRateRank-1]}</span>` : ""}</div>
+            ${rankBadge(winRateRank)}
+            <div class="char-stat-val">${winRate}</div>
             <div class="char-stat-lbl">Win Rate</div>
           </div>
           <div class="char-stat-block${medalClass(winsRank)}">
-            <div class="char-stat-val">${stats.wins}${winsRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][winsRank-1]}</span>` : ""}</div>
+            ${rankBadge(winsRank)}
+            <div class="char-stat-val">${stats.wins}</div>
             <div class="char-stat-lbl">Wins</div>
           </div>
-          <div class="char-stat-block">
+          <div class="char-stat-block${medalClass(lossesRank)}">
+            ${rankBadge(lossesRank)}
             <div class="char-stat-val">${stats.losses}</div>
             <div class="char-stat-lbl">Losses</div>
           </div>
           <div class="char-stat-block${medalClass(matchesRank)}">
-            <div class="char-stat-val">${stats.matches}${matchesRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][matchesRank-1]}</span>` : ""}</div>
+            ${rankBadge(matchesRank)}
+            <div class="char-stat-val">${stats.matches}</div>
             <div class="char-stat-lbl">Matches</div>
           </div>
           <div class="char-stat-block${medalClass(upsetsRank)}">
-            <div class="char-stat-val">${stats.upsets}${upsetsRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][upsetsRank-1]}</span>` : ""}</div>
+            ${rankBadge(upsetsRank)}
+            <div class="char-stat-val">${stats.upsets}</div>
             <div class="char-stat-lbl">Upsets Pulled</div>
           </div>
-          <div class="char-stat-block">
-            <div class="char-stat-val">${stats.upsetLosses ?? 0}</div>
+          <div class="char-stat-block${medalClass(upsetLossesRank)}">
+            ${rankBadge(upsetLossesRank)}
+            <div class="char-stat-val">${(stats.upsetLosses ?? 0)}</div>
             <div class="char-stat-lbl">Times Upset</div>
           </div>
         </div>
@@ -326,8 +335,119 @@ function renderCharDetail() {
       ${buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups)}
       ${buildPlacementsCard(currentAgg.tournamentResults, charName)}
     </div>
+    <div class="card-row">
+      ${buildProgressCard(currentAgg.tournamentResults, charName, isAllTime)}
+      ${buildRecentCard(currentAgg.tournamentResults, charName)}
+    </div>
     ${buildNotFacedCard(notFaced)}
   `;
+}
+
+// ── Rating / rank progression ─────────────────────────────────────────────────
+
+const START_ELO = 1500;
+const K_FACTOR = 32;
+
+/**
+ * Replays all tournaments in chronological order with a simple Elo update and
+ * returns [{label, rating, rank}] for each tournament charName played in.
+ */
+function computeProgression(tournamentResults, charName) {
+  const ratings = new Map();
+  const get = (n) => ratings.get(n) ?? START_ELO;
+  const points = [];
+
+  for (const { name, result } of tournamentResults) {
+    // Sections are stored latest-round first; reverse for chronological order.
+    const matches = [...result.sections].reverse().flatMap((sec) => sec.matches);
+    let played = false;
+    for (const m of matches) {
+      const rw = get(m.winner);
+      const rl = get(m.loser);
+      const exp = 1 / (1 + Math.pow(10, (rl - rw) / 400));
+      ratings.set(m.winner, rw + K_FACTOR * (1 - exp));
+      ratings.set(m.loser, rl - K_FACTOR * (1 - exp));
+      if (m.winner === charName || m.loser === charName) played = true;
+    }
+    if (!played) continue;
+    const mine = get(charName);
+    let above = 0;
+    for (const [n, r] of ratings) if (n !== charName && r > mine) above++;
+    points.push({ label: name, rating: mine, rank: above + 1 });
+  }
+  return points;
+}
+
+function buildProgressCard(tournamentResults, charName, allTime) {
+  const pts = computeProgression(tournamentResults, charName);
+  const title = allTime ? "Performance Over All Seasons" : "Performance Through the Season";
+  if (pts.length < 2) {
+    return `<div class="card progress-card"><h2>${title}</h2><p class="muted">Not enough tournament data to graph.</p></div>`;
+  }
+
+  const W = 600, H = 260, L = 46, R = 46, T = 16, B = 30;
+  const x = (i) => L + (i * (W - L - R)) / (pts.length - 1);
+  const ratings = pts.map((p) => p.rating);
+  const rMin = Math.min(...ratings), rMax = Math.max(...ratings);
+  const rPad = Math.max((rMax - rMin) * 0.1, 5);
+  const yR = (v) => T + ((rMax + rPad - v) / (rMax - rMin + 2 * rPad)) * (H - T - B);
+  const ranks = pts.map((p) => p.rank);
+  const kMin = Math.min(...ranks), kMax = Math.max(...ranks);
+  const kSpan = Math.max(kMax - kMin, 1);
+  // Rank 1 at the top
+  const yK = (v) => T + ((v - kMin) / kSpan) * (H - T - B);
+
+  const line = (fn, key) => pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${fn(p[key]).toFixed(1)}`).join(" ");
+  const dots = (fn, key, cls, fmt) => pts.map((p, i) =>
+    `<circle class="${cls}" cx="${x(i).toFixed(1)}" cy="${fn(p[key]).toFixed(1)}" r="3.5"><title>${p.label}: ${fmt(p[key])}</title></circle>`).join("");
+
+  const grid = [0, 0.5, 1].map((f) => {
+    const y = T + f * (H - T - B);
+    const rv = Math.round(rMax + rPad - f * (rMax - rMin + 2 * rPad));
+    const kv = Math.round(kMin + f * kSpan);
+    return `<line class="chart-grid" x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/>
+      <text class="chart-axis chart-axis-rating" x="${L - 6}" y="${y + 4}" text-anchor="end">${rv}</text>
+      <text class="chart-axis chart-axis-rank" x="${W - R + 6}" y="${y + 4}" text-anchor="start">#${kv}</text>`;
+  }).join("");
+
+  return `
+    <div class="card progress-card">
+      <h2>${title}</h2>
+      <div class="chart-legend"><span class="legend-rating">● Rating</span><span class="legend-rank">● Rank</span></div>
+      <svg class="progress-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Rating and rank over time">
+        ${grid}
+        <path class="chart-line-rating" d="${line(yR, "rating")}"/>
+        <path class="chart-line-rank" d="${line(yK, "rank")}"/>
+        ${dots(yR, "rating", "chart-dot-rating", (v) => Math.round(v) + " Elo")}
+        ${dots(yK, "rank", "chart-dot-rank", (v) => "Rank #" + v)}
+        <text class="chart-axis" x="${L}" y="${H - 8}" text-anchor="start">${pts[0].label}</text>
+        <text class="chart-axis" x="${W - R}" y="${H - 8}" text-anchor="end">${pts[pts.length - 1].label}</text>
+      </svg>
+    </div>`;
+}
+
+function buildRecentCard(tournamentResults, charName) {
+  const rows = [];
+  for (let i = tournamentResults.length - 1; i >= 0 && rows.length < 5; i--) {
+    const { name, result } = tournamentResults[i];
+    let w = 0, l = 0;
+    for (const m of result.matches) {
+      if (m.winner === charName) w++;
+      else if (m.loser === charName) l++;
+    }
+    if (w + l === 0) continue;
+    const placement = derivePlacement(result.sections, charName);
+    const bucket = placement != null ? placementBucket(placement) : null;
+    rows.push(`
+      <div class="recent-row">
+        <span class="recent-name">${name}</span>
+        <span class="recent-result">${bucket ?? "—"} <span class="muted">${w}–${l}</span></span>
+      </div>`);
+  }
+  if (!rows.length) {
+    return `<div class="card recent-card"><h2>Last 5 Tournaments</h2><p class="muted">No tournaments played.</p></div>`;
+  }
+  return `<div class="card recent-card"><h2>Last 5 Tournaments</h2>${rows.join("")}</div>`;
 }
 
 function buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups) {
