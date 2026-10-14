@@ -272,8 +272,8 @@ Top 2
 Bowser	3
 Grand Final (Set 2)
 Top 2
-129	Bowser	0	
-Byleth	3
+129	Bowser	3
+Byleth	0
 Losers Round 1
 Top 128
 130	Bye	 	
