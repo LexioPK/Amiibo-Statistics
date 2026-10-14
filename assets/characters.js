@@ -134,12 +134,19 @@ function trendIndicator(delta) {
   if (delta == null) return "";
   const a = Math.abs(delta);
   const up = delta > 0;
-  if (a < 15) return `<span class="trend trend-flat" title="Little change over last 5 tournaments">–</span>`;
-  const big = a >= 50;
-  const sym = big ? (up ? "↑" : "↓") : up ? "↗" : "↘";
-  const cls = up ? "trend-up" : "trend-down";
   const sign = delta > 0 ? "+" : "";
-  return `<span class="trend ${cls}" title="${sign}${Math.round(delta)} rating over last 5 tournaments">${sym}</span>`;
+  const title = `${sign}${Math.round(delta)} rating over last 5 tournaments`;
+  if (a < 15) return `<span class="trend trend-flat" title="Little change over last 5 tournaments"><svg viewBox="0 0 20 12" width="20" height="12"><rect x="3" y="4" width="14" height="4" rx="1" fill="currentColor"/></svg></span>`;
+  const big = a >= 50;
+  // Short, fat arrows: big = solid triangle with stubby shaft, slight = angled wide arrow
+  const shape = big
+    ? (up
+      ? `<path d="M10 1 L19 8 L13 8 L13 11 L7 11 L7 8 L1 8 Z" fill="currentColor"/>`
+      : `<path d="M10 11 L19 4 L13 4 L13 1 L7 1 L7 4 L1 4 Z" fill="currentColor"/>`)
+    : (up
+      ? `<path d="M3 11 L9 5 L7 3 L17 2 L16 12 L14 10 L8 15 Z" fill="currentColor" transform="translate(0,-2)"/>`
+      : `<path d="M3 1 L9 7 L7 9 L17 10 L16 0 L14 2 L8 -3 Z" fill="currentColor" transform="translate(0,2)"/>`);
+  return `<span class="trend ${up ? "trend-up" : "trend-down"}" title="${title}"><svg viewBox="0 0 20 12" width="20" height="12" overflow="visible">${shape}</svg></span>`;
 }
 
 function renderStats(roster, perChar, trends = new Map()) {

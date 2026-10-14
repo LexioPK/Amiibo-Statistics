@@ -578,3 +578,16 @@ tr.upset-row td { background: #4a3f12 !important; }
 .trend-flat { color: #fff; }
 .trend-up { color: #22c55e; }
 .trend-down { color: #ef4444; }
+
+.trend { display: inline-flex; align-items: center; margin-left: 0.2rem; }
+.trend svg { display: block; }
+.card-row > .card-col { flex: 1 1 0; min-width: 0; }
+.char-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+.char-nav-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: #161a21; border: 1px solid #2d3340; border-radius: 10px;
+  padding: 0.55rem 1rem; color: #e5e7eb; text-decoration: none; font-weight: 600; font-size: 0.9rem;
+}
+.char-nav-btn:hover { border-color: #60a5fa; }
+.char-nav-btn.next { margin-left: auto; }
+.season-tab-btn.active { color: #fff; }

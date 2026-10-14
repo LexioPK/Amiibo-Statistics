@@ -2,6 +2,7 @@ import {
   SEASON_COUNT,
   loadSeasonRoster,
   loadAllTimesRoster,
+  loadTournamentIndex,
   loadAndAggregateAllTournaments,
   loadAllSeasonsData,
   populateSeasonSelect,
@@ -10,7 +11,7 @@ import {
   portraitPath,
   canonKey,
 } from "./lib.js";
-import { getSeasonTimeline } from "./rating-engine.js";
+import { getSeasonTimeline, getAllTimeRatings, getAllTimeRatingsBeforeTournament } from "./rating-engine.js";
 
 const seasonSelect = document.getElementById("seasonSelect");
 const charSelect = document.getElementById("charSelect");
@@ -309,20 +310,60 @@ ${statBlock(winRate, "Win Rate", winRateRank)}${statBlock(stats.wins, "Wins", wi
     </div>
 
     <div class="card-row">
-      ${buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups)}
-      ${buildPlacementsCard(currentAgg.tournamentResults, charName)}
-    </div>
-    <div class="card-row">
       ${buildRatingChartCard(chartData)}
       ${buildRecentTournamentsCard(currentAgg.tournamentResults, charName)}
     </div>
-    ${isAllTime ? buildNotFacedCard(notFaced) : ""}
+    <div class="card-row">
+      <div class="card-col">
+        ${buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups)}
+        ${isAllTime ? buildNotFacedCard(notFaced) : ""}
+      </div>
+      ${buildPlacementsCard(currentAgg.tournamentResults, charName)}
+    </div>
+    ${buildCharNav(charName)}
   `;
 }
 
 // ── Rating chart + recent tournaments ─────────────────────────────────────────
 
+function buildCharNav(charName) {
+  const roster = currentCtx.roster;
+  const i = roster.findIndex((r) => r.name === charName);
+  if (i < 0 || roster.length < 2) return "";
+  const prev = roster[(i - 1 + roster.length) % roster.length];
+  const next = roster[(i + 1) % roster.length];
+  const btn = (r, cls, label) => `
+    <a class="char-nav-btn ${cls}" href="./character.html?char=${encodeURIComponent(r.name)}">
+      ${cls === "prev" ? `<span>←</span>` : ""}
+      <img class="char-icon" src="${iconPath(r.name)}" alt="" onerror="this.style.display='none'">
+      <span>${label}: ${r.name}</span>
+      ${cls === "next" ? `<span>→</span>` : ""}
+    </a>`;
+  return `<div class="char-nav">${btn(prev, "prev", "Previous")}${btn(next, "next", "Next")}</div>`;
+}
+
+async function buildAllTimeChartData(charName) {
+  const key = canonKey(charName);
+  const pts = [];
+  for (let season = 1; season <= SEASON_COUNT; season++) {
+    let files = [];
+    try { files = (await loadTournamentIndex(season)).tournaments ?? []; } catch { continue; }
+    for (const file of files) {
+      const rows = await getAllTimeRatingsBeforeTournament(season, file);
+      const row = rows.find((r) => canonKey(r.name) === key);
+      if (row) pts.push({ label: `S${season} — ${file.replace(/\.txt$/i, "")}`, rating: row.rating });
+    }
+  }
+  if (!pts.length) return null;
+  const final = (await getAllTimeRatings()).find((r) => canonKey(r.name) === key);
+  if (final) pts.push({ label: "Current", rating: final.rating });
+  return { season: null, points: pts };
+}
+
 async function buildChartData(charName) {
+  if (isAllTime) {
+    try { return await buildAllTimeChartData(charName); } catch (e) { console.warn(e); return null; }
+  }
   const key = canonKey(charName);
   let seasons = isAllTime
     ? Array.from({ length: SEASON_COUNT }, (_, i) => SEASON_COUNT - i)
@@ -366,16 +407,16 @@ function buildRatingChartCard(data) {
     const v = min + ((max - min) * i) / 4;
     grid += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="chart-grid"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" class="chart-axis" text-anchor="end">${Math.round(v)}</text>`;
   }
-  const dots = data.points.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.rating).toFixed(1)}" r="3.5" class="chart-dot"><title>${p.label}: ${Math.round(p.rating)}</title></circle>`).join("");
+  const dots = data.points.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.rating).toFixed(1)}" r="${n > 40 ? 2 : 3.5}" class="chart-dot"><title>${p.label}: ${Math.round(p.rating)}</title></circle>`).join("");
   const last = data.points[n - 1];
   return `
     <div class="card rating-chart-card">
-      <h2>Rating Over Season ${data.season}</h2>
+      <h2>${data.season == null ? "Rating Over All Tournaments" : `Rating Over Season ${data.season}`}</h2>
       <svg class="rating-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rating over the season">
         ${grid}
         <path d="${path}" class="chart-line"/>
         ${dots}
-        <text x="${W - R}" y="${H - 6}" class="chart-axis" text-anchor="end">Latest: ${Math.round(last.rating)} · ${n - 1} tournament${n - 1 !== 1 ? "s" : ""}</text>
+        <text x="${W - R}" y="${H - 6}" class="chart-axis" text-anchor="end">Latest: ${Math.round(last.rating)} · ${data.season == null ? n - 1 : n - 1} tournament${n - 1 !== 1 ? "s" : ""}</text>
       </svg>
     </div>`;
 }
@@ -395,7 +436,7 @@ function buildRecentTournamentsCard(tournamentResults, charName) {
       else if (m.loser === charName) l++;
     }
     if (w + l === 0) continue;
-    rows.push({ name, w, l, placement: derivePlacement(result.sections, charName) });
+    rows.push({ name: name.replace(/^S\d+\s*[—–-]\s*/, ""), w, l, placement: derivePlacement(result.sections, charName) });
   }
   const last5 = rows.slice(-5).reverse();
   if (!last5.length) {
