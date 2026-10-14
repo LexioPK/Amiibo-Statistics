@@ -31,33 +31,21 @@ const HARDCODED_ALIASES = new Map([
 ]);
 
 /** If nameRaw is a known alternate spelling, return the preferred name; otherwise return nameRaw unchanged. */
-function resolveAlias(nameRaw) {
+export function resolveAlias(nameRaw) {
   const key = canonKey(nameRaw);
   return HARDCODED_ALIASES.get(key) ?? nameRaw;
 }
 
-export function parseCsvLoose(line) {
-  const out = [];
-  let cur = "";
-  let inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQ && i + 1 < line.length && line[i + 1] === '"') { cur += '"'; i++; continue; }
-      inQ = !inQ;
-      continue;
-    }
-    if (ch === "," && !inQ) { out.push(cur); cur = ""; continue; }
-    cur += ch;
-  }
-  out.push(cur);
-  return out.map((x) => x.trim());
-}
+/**
+ * Names that are excluded from all rankings/stats entirely (e.g. entries that
+ * aren't actually amiibo characters). Matches involving an excluded name are
+ * skipped everywhere — ratings, win/loss counts, upsets — the same as a bye.
+ */
+const EXCLUDED_NAMES = new Set(["sean"]);
 
-export function stripQuotes(s) {
-  const t = String(s ?? "").trim();
-  if (t.startsWith('"') && t.endsWith('"')) return t.slice(1, -1);
-  return t;
+/** True if nameRaw (after alias resolution) refers to an excluded name. */
+export function isExcludedName(nameRaw) {
+  return EXCLUDED_NAMES.has(canonKey(resolveAlias(nameRaw)));
 }
 
 export async function fetchText(url) {
@@ -73,86 +61,61 @@ export async function fetchJson(url) {
 }
 
 /**
- * Loads season roster from Season Data CSV.
- * Returns { roster, eloByNameKey, displayByNameKey }
+ * Builds the roster context shape ({ roster, eloByNameKey, displayByNameKey,
+ * rankByNameKey }) that the rest of the app consumes, from a list of computed
+ * Glicko-2 rating rows ({ rank, name, rating, rd, matches }).
+ *
+ * `elo` here holds the character's current Glicko-2 rating (kept under the
+ * historical name for compatibility with the rest of the codebase); `rd`
+ * carries the rating deviation (uncertainty) alongside it.
  */
-export async function loadSeasonRoster(season) {
-  const url = `./${encodeURIComponent("Season Data")}/${encodeURIComponent(`Season ${season}.csv`)}`;
-  const text = await fetchText(url);
-  const lines = text.split(/\r?\n/g).map((l) => l.trim()).filter(Boolean);
-
+function buildRosterContext(rows) {
   const roster = [];
   const eloByNameKey = new Map();
+  const rdByNameKey = new Map();
   const displayByNameKey = new Map();
   const rankByNameKey = new Map();
 
-  for (const line of lines) {
-    const cols = parseCsvLoose(line);
-    const rank = Number(stripQuotes(cols[0] ?? ""));
-    const name = stripQuotes(cols[1] ?? "");
-    const elo = Number(stripQuotes(cols[2] ?? ""));
-    const alias = stripQuotes(cols[4] ?? "");
+  for (const row of rows) {
+    const name = norm(row.name);
+    if (isExcludedName(name)) continue;
+    const entry = { rank: row.rank ?? null, name, elo: row.rating, rd: row.rd };
+    roster.push(entry);
 
-    if (!name || !Number.isFinite(elo)) continue;
-
-    const row = { rank: Number.isFinite(rank) ? rank : null, name: norm(name), alias: norm(alias), elo };
-    roster.push(row);
-
-    const keys = new Set([canonKey(row.name)]);
-    if (row.alias) keys.add(canonKey(row.alias));
-    for (const k of keys) {
-      eloByNameKey.set(k, elo);
-      displayByNameKey.set(k, row.name);
-      if (row.rank != null) rankByNameKey.set(k, row.rank);
-    }
+    const key = canonKey(name);
+    eloByNameKey.set(key, row.rating);
+    rdByNameKey.set(key, row.rd);
+    displayByNameKey.set(key, name);
+    if (entry.rank != null) rankByNameKey.set(key, entry.rank);
   }
 
-  roster.sort((a, b) => {
-    if (a.rank != null && b.rank != null) return a.rank - b.rank;
-    return b.elo - a.elo;
-  });
-
-  return { roster, eloByNameKey, displayByNameKey, rankByNameKey };
+  return { roster, eloByNameKey, rdByNameKey, displayByNameKey, rankByNameKey };
 }
 
-/** Loads the all-time roster from "Season Data/All Times.csv". */
+/**
+ * Loads the season roster: every amiibo's Glicko-2 rating/RD for the given
+ * season alone. Every player starts fresh from the standard starting
+ * rating/RD at the beginning of the season (a reset), so standings only
+ * reflect that season's own matches — not earlier or later seasons.
+ * Characters who didn't compete that season are excluded.
+ * Returns { roster, eloByNameKey, rdByNameKey, displayByNameKey, rankByNameKey }
+ */
+export async function loadSeasonRoster(season) {
+  const { getSeasonRatings } = await import("./rating-engine.js");
+  const rows = await getSeasonRatings(season);
+  return buildRosterContext(rows);
+}
+
+/**
+ * Loads the all-time roster: every amiibo's Glicko-2 rating/RD from the
+ * single continuous history across every recorded tournament (no per-season
+ * resets), with more recent seasons weighted slightly more heavily so
+ * current performance counts a bit more without diminishing earlier results.
+ */
 export async function loadAllTimesRoster() {
-  const url = `./${encodeURIComponent("Season Data")}/${encodeURIComponent("All Times.csv")}`;
-  const text = await fetchText(url);
-  const lines = text.split(/\r?\n/g).map((l) => l.trim()).filter(Boolean);
-
-  const roster = [];
-  const eloByNameKey = new Map();
-  const displayByNameKey = new Map();
-  const rankByNameKey = new Map();
-
-  for (const line of lines) {
-    const cols = parseCsvLoose(line);
-    const rank = Number(stripQuotes(cols[0] ?? ""));
-    const name = stripQuotes(cols[1] ?? "");
-    const elo = Number(stripQuotes(cols[2] ?? ""));
-    const alias = stripQuotes(cols[4] ?? "");
-
-    if (!name || !Number.isFinite(elo)) continue;
-
-    const row = { rank: Number.isFinite(rank) ? rank : null, name: norm(name), alias: norm(alias), elo };
-    roster.push(row);
-
-    const keys = new Set([canonKey(row.name)]);
-    if (row.alias) keys.add(canonKey(row.alias));
-    for (const k of keys) {
-      eloByNameKey.set(k, elo);
-      displayByNameKey.set(k, row.name);
-      if (row.rank != null) rankByNameKey.set(k, row.rank);
-    }
-  }
-
-  roster.sort((a, b) => {
-    if (a.rank != null && b.rank != null) return a.rank - b.rank;
-    return b.elo - a.elo;
-  });
-
-  return { roster, eloByNameKey, displayByNameKey, rankByNameKey };
+  const { getAllTimeRatings } = await import("./rating-engine.js");
+  const rows = await getAllTimeRatings();
+  return buildRosterContext(rows);
 }
 
 export async function loadTournamentIndex(season) {
@@ -287,10 +250,6 @@ export function parseCompetitorLine(line) {
   return { nameRaw, score, bye: false };
 }
 
-export function expectedWinProb(eloA, eloB) {
-  return 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
-}
-
 // ── Tournament result computation ────────────────────────────────────────────
 
 /**
@@ -300,6 +259,11 @@ export function expectedWinProb(eloA, eloB) {
  *     matches: [{winner, winnerScore, loser, loserScore, isUpset}],  ← flat, sorted
  *     sections: [{name, topN, sortKey, matches}],                    ← sorted for display
  *     perChar: Map, h2h: Map, unknownNames: string[] }
+ *
+ * `ctx.rankByNameKey` (and `ctx.eloByNameKey`) should reflect standings as of
+ * immediately *before* this tournament started, so that upsets are judged
+ * against the ranking at the time the tournament was played, not against
+ * ranking data from tournaments that happened afterwards.
  */
 export function computeTournamentResults(text, ctx) {
   const rawSections = parseTournamentSections(text);
@@ -314,7 +278,7 @@ export function computeTournamentResults(text, ctx) {
 
   function ensure(displayName, elo) {
     if (!perChar.has(displayName)) {
-      perChar.set(displayName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo: elo ?? null, expectedWins: 0 });
+      perChar.set(displayName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo: elo ?? null });
     }
     return perChar.get(displayName);
   }
@@ -347,6 +311,7 @@ export function computeTournamentResults(text, ctx) {
       if (!c1 || !c2) continue;
 
       if (c1.bye || c2.bye) { matchesIgnoredBye++; continue; }
+      if (isExcludedName(c1.nameRaw) || isExcludedName(c2.nameRaw)) { matchesIgnoredBye++; continue; }
       if (c1.score == null || c2.score == null) { matchesSkippedNoScore++; continue; }
 
       const d1 = toDisplay(c1.nameRaw);
@@ -372,12 +337,6 @@ export function computeTournamentResults(text, ctx) {
       ensure(loser.name, loser.elo).losses++;
       matchesCounted++;
 
-      if (elo1 != null && elo2 != null) {
-        const p1wins = expectedWinProb(elo1, elo2);
-        e1.expectedWins += p1wins;
-        e2.expectedWins += (1 - p1wins);
-      }
-
       const a = d1 < d2 ? d1 : d2;
       const b = d1 < d2 ? d2 : d1;
       const h2hKey = `${a}__${b}`;
@@ -388,7 +347,8 @@ export function computeTournamentResults(text, ctx) {
 
       let isUpset = false;
       if (winner.rank != null && loser.rank != null) {
-        // Upset: winner is ranked at least `threshold` spots below the loser.
+        // Upset: winner is ranked at least `threshold` spots below the loser,
+        // using standings as of immediately before this tournament.
         // For top-10 losers the bar is lower (5 spots); otherwise 10 spots.
         const threshold = loser.rank <= 10 ? 5 : 10;
         if (winner.rank - loser.rank >= threshold) {
@@ -432,13 +392,75 @@ export function computeTournamentResults(text, ctx) {
   };
 }
 
+
 // ── Aggregation ───────────────────────────────────────────────────────────────
 
 /**
+ * Builds a copy of `ctx` whose rank/rating lookups are overridden from the
+ * given rating rows. Name-display lookups (`displayByNameKey`) are left
+ * untouched since those are just alias→canonical-name mappings, not
+ * point-in-time standings.
+ */
+function contextFromRows(rows, baseCtx) {
+  const rankByNameKey = new Map();
+  const eloByNameKey = new Map(baseCtx.eloByNameKey);
+  for (const row of rows) {
+    const key = canonKey(row.name);
+    rankByNameKey.set(key, row.rank);
+    eloByNameKey.set(key, row.rating);
+  }
+
+  return { ...baseCtx, rankByNameKey, eloByNameKey };
+}
+
+/**
+ * Builds a copy of `ctx` whose rank/rating lookups reflect standings as of
+ * immediately *before* the given tournament, within that tournament's own
+ * season (season-reset), so a season's upsets are judged against "at the
+ * time" rankings for that season alone.
+ */
+async function contextForTournament(season, filename, baseCtx) {
+  const { getSeasonRatingsBeforeTournament } = await import("./rating-engine.js");
+  const rows = await getSeasonRatingsBeforeTournament(season, filename);
+  return contextFromRows(rows, baseCtx);
+}
+
+/**
+ * Builds a copy of `ctx` whose rank/rating lookups reflect the continuous
+ * all-time standings as of immediately *before* the given tournament (across
+ * every season, no resets), for the "All Time" view.
+ */
+async function contextForTournamentAllTime(season, filename, baseCtx) {
+  const { getAllTimeRatingsBeforeTournament } = await import("./rating-engine.js");
+  const rows = await getAllTimeRatingsBeforeTournament(season, filename);
+  return contextFromRows(rows, baseCtx);
+}
+
+/**
+ * Loads the roster context to use for a single tournament. By default,
+ * display names and rank/rating come from that tournament's own season
+ * (reset at the start of the season). Pass `{ continuous: true }` to use the
+ * continuous all-time standings instead (for the "All Time" tournament
+ * browser), optionally with a pre-loaded all-time `baseCtx`.
+ */
+export async function loadTournamentRosterContext(season, filename, baseCtx, opts = {}) {
+  const continuous = opts.continuous ?? false;
+  const ctx = baseCtx ?? (continuous ? await loadAllTimesRoster() : await loadSeasonRoster(season));
+  return continuous
+    ? contextForTournamentAllTime(season, filename, ctx)
+    : contextForTournament(season, filename, ctx);
+}
+
+/**
  * Loads all tournaments for one season and aggregates per-character + h2h data.
+ * By default, each tournament's upsets are computed against that season's own
+ * "at the time" standings (season-reset). Pass `{ continuous: true }` to
+ * instead judge upsets against the continuous all-time standings as of that
+ * point (used when aggregating for the "All Time" view).
  * Returns { perChar, h2h, tournamentResults: [{name, result}] }
  */
-export async function loadAndAggregateAllTournaments(season, ctx) {
+export async function loadAndAggregateAllTournaments(season, ctx, opts = {}) {
+  const continuous = opts.continuous ?? false;
   const idx = await loadTournamentIndex(season);
   const files = idx.tournaments ?? [];
 
@@ -448,7 +470,7 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
 
   function mergeChar(name, elo, src) {
     if (!perChar.has(name)) {
-      perChar.set(name, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo, expectedWins: 0 });
+      perChar.set(name, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo });
     }
     const dst = perChar.get(name);
     dst.matches += src.matches;
@@ -456,7 +478,6 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
     dst.losses += src.losses;
     dst.upsets += src.upsets;
     dst.upsetLosses += (src.upsetLosses ?? 0);
-    dst.expectedWins += src.expectedWins;
   }
 
   function mergeH2H(srcMap) {
@@ -472,7 +493,10 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
   for (const file of files) {
     try {
       const text = await loadTournamentText(season, file);
-      const result = computeTournamentResults(text, ctx);
+      const tourCtx = continuous
+        ? await contextForTournamentAllTime(season, file, ctx)
+        : await contextForTournament(season, file, ctx);
+      const result = computeTournamentResults(text, tourCtx);
       tournamentResults.push({ name: file.replace(/\.txt$/i, ""), result });
       for (const [name, stats] of result.perChar) {
         mergeChar(name, stats.elo, stats);
@@ -487,29 +511,30 @@ export async function loadAndAggregateAllTournaments(season, ctx) {
 }
 
 /**
- * Loads and aggregates ALL seasons' data.
- * Uses the latest season's roster as the reference (for consistent rankings).
+ * Loads and aggregates ALL seasons' data using the continuous all-time
+ * standings (every tournament taken into account together, more recent
+ * seasons weighted slightly more heavily) as the reference for ranks/ratings
+ * and canonical names.
  * Returns { perChar, h2h, tournamentResults, ctx }
  */
 export async function loadAllSeasonsData(latestSeason) {
-  const ctx = await loadSeasonRoster(latestSeason);
+  const ctx = await loadAllTimesRoster();
   const perChar = new Map();
   const h2h = new Map();
   const tournamentResults = [];
 
   for (let s = 1; s <= latestSeason; s++) {
     try {
-      const sCtx = await loadSeasonRoster(s);
-      const agg = await loadAndAggregateAllTournaments(s, sCtx);
+      const agg = await loadAndAggregateAllTournaments(s, ctx, { continuous: true });
 
       for (const [name, stats] of agg.perChar) {
-        // Map to latest-season canonical name where possible
+        // Map to all-time canonical name where possible
         const key = canonKey(name);
         const canonName = ctx.displayByNameKey.get(key) ?? name;
         const elo = ctx.eloByNameKey.get(key) ?? stats.elo;
 
         if (!perChar.has(canonName)) {
-          perChar.set(canonName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo, expectedWins: 0 });
+          perChar.set(canonName, { matches: 0, wins: 0, losses: 0, upsets: 0, upsetLosses: 0, elo });
         }
         const dst = perChar.get(canonName);
         dst.matches += stats.matches;
@@ -517,7 +542,6 @@ export async function loadAllSeasonsData(latestSeason) {
         dst.losses += stats.losses;
         dst.upsets += stats.upsets;
         dst.upsetLosses += (stats.upsetLosses ?? 0);
-        dst.expectedWins += stats.expectedWins;
       }
 
       for (const [key2, row] of agg.h2h) {
@@ -581,13 +605,4 @@ export function portraitPath(name) {
 export function pct(n, d) {
   if (!d) return "—";
   return (n / d * 100).toFixed(1) + "%";
-}
-
-/** Compute consistency score (0–100) for a character. */
-export function consistencyScore(wins, matches, expectedWins) {
-  if (!matches) return null;
-  const actualRate = wins / matches;
-  const expectedRate = expectedWins / matches;
-  const diff = Math.abs(actualRate - expectedRate);
-  return Math.max(0, Math.round((1 - diff * 2) * 100));
 }

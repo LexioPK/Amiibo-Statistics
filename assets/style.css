@@ -207,10 +207,6 @@ tr.upset-row td { background: #fef9c3 !important; }
   height: 28px;
 }
 
-/* Performance indicators on Characters page */
-.perf-good { color: #15803d; font-weight: 600; }
-.perf-poor { color: #b91c1c; }
-
 /* ── Head-to-Head ── */
 .h2h-overview {
   display: flex;

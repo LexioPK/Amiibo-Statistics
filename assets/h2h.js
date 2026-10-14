@@ -143,7 +143,7 @@ function renderH2H() {
       <div class="h2h-side ${aWinClass}">
         <div class="h2h-rank">#${aRoster?.rank ?? "?"}</div>
         <div class="h2h-name"><span class="char-name-wrap">${aName}<img class="char-icon" src="${iconPath(aName)}" alt="" onerror="this.style.display='none'"></span></div>
-        <div class="h2h-elo">${aRoster?.elo ?? "?"} Elo</div>
+        <div class="h2h-elo">${aRoster?.elo ?? "?"} Rating${aRoster?.rd != null ? ` (RD ${aRoster.rd})` : ""}</div>
         <div class="h2h-wins-big">${aWins}</div>
         <div class="h2h-wins-label">win${aWins !== 1 ? "s" : ""}</div>
       </div>
@@ -159,14 +159,14 @@ function renderH2H() {
         }
         <div class="h2h-diff-row">
           <span>Rank diff: <b>${rankDiff > 0 ? "+" : ""}${rankDiff}</b></span>
-          <span>Elo diff: <b>${eloDiff > 0 ? "+" : ""}${eloDiff}</b></span>
+          <span>Rating diff: <b>${eloDiff > 0 ? "+" : ""}${eloDiff}</b></span>
         </div>
       </div>
 
       <div class="h2h-side ${bWinClass}">
         <div class="h2h-rank">#${bRoster?.rank ?? "?"}</div>
         <div class="h2h-name"><span class="char-name-wrap">${bName}<img class="char-icon" src="${iconPath(bName)}" alt="" onerror="this.style.display='none'"></span></div>
-        <div class="h2h-elo">${bRoster?.elo ?? "?"} Elo</div>
+        <div class="h2h-elo">${bRoster?.elo ?? "?"} Rating${bRoster?.rd != null ? ` (RD ${bRoster.rd})` : ""}</div>
         <div class="h2h-wins-big">${bWins}</div>
         <div class="h2h-wins-label">win${bWins !== 1 ? "s" : ""}</div>
       </div>

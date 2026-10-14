@@ -1,8 +1,8 @@
 import {
   SEASON_COUNT,
-  loadSeasonRoster,
   loadTournamentIndex,
   loadTournamentText,
+  loadTournamentRosterContext,
   computeTournamentResults,
   populateSeasonSelect,
   iconPath,
@@ -15,6 +15,7 @@ const summaryEl = document.getElementById("summary");
 const matchesBody = document.querySelector("#matchesTable tbody");
 
 let currentSeason = SEASON_COUNT;
+let isAllTimeMode = false;
 
 populateSeasonSelect(seasonSelect, SEASON_COUNT);
 
@@ -39,6 +40,7 @@ async function loadSeason(seasonVal) {
   tournamentSelect.innerHTML = "";
 
   if (seasonVal === "alltime") {
+    isAllTimeMode = true;
     setStatus("Loading all tournaments…");
     let found = false;
     for (let s = SEASON_COUNT; s >= 1; s--) {
@@ -62,6 +64,7 @@ async function loadSeason(seasonVal) {
   }
 
   currentSeason = Number(seasonVal);
+  isAllTimeMode = false;
   setStatus(`Loading season ${currentSeason}…`);
   try {
     const idx = await loadTournamentIndex(currentSeason);
@@ -91,8 +94,11 @@ async function loadTournament(season, filename) {
   setStatus(`Loading ${filename.replace(/\.txt$/i, "")}…`);
   clearResults();
   try {
-    // Always load the correct season's roster for name resolution
-    const ctx = await loadSeasonRoster(season);
+    // Ranks/ratings reflect standings immediately before this tournament,
+    // so upsets are judged "at the time", not using later results. In
+    // All-Time mode this uses the continuous cross-season standings;
+    // otherwise it uses that tournament's own season, reset at season start.
+    const ctx = await loadTournamentRosterContext(season, filename, undefined, { continuous: isAllTimeMode });
     const text = await loadTournamentText(season, filename);
     const state = computeTournamentResults(text, ctx);
     renderResults(state);
