@@ -7,7 +7,9 @@ import {
   populateSeasonSelect,
   pct,
   iconPath,
+  canonKey,
 } from "./lib.js";
+import { getSeasonTimeline } from "./rating-engine.js";
 
 const seasonSelect = document.getElementById("seasonSelect");
 const statusEl = document.getElementById("status");
@@ -73,7 +75,9 @@ async function loadAndRender(season) {
 
     if (noDataMsg) noDataMsg.hidden = hasAnyData;
 
-    renderStats(ctx.roster, perChar);
+    let trends = new Map();
+    try { trends = await computeTrends(season); } catch (e) { console.warn(e); }
+    renderStats(ctx.roster, perChar, trends);
     renderParity();
     setStatus(hasAnyData ? "Loaded." : "No tournament data found for this season.");
   } catch (e) {
@@ -112,7 +116,33 @@ async function loadAndRenderAllTime() {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 
-function renderStats(roster, perChar) {
+/** Rating change over the last 5 tournaments of a season, keyed by canonKey. */
+async function computeTrends(season) {
+  const { initialRating, points } = await getSeasonTimeline(season);
+  const trends = new Map();
+  if (!points.length) return trends;
+  const latest = points[points.length - 1].ratings;
+  const before = points.length > 5 ? points[points.length - 6].ratings : null;
+  for (const [key, cur] of latest) {
+    const prev = before?.get(key)?.rating ?? initialRating;
+    trends.set(key, cur.rating - prev);
+  }
+  return trends;
+}
+
+function trendIndicator(delta) {
+  if (delta == null) return "";
+  const a = Math.abs(delta);
+  const up = delta > 0;
+  if (a < 15) return `<span class="trend trend-flat" title="Little change over last 5 tournaments">–</span>`;
+  const big = a >= 50;
+  const sym = big ? (up ? "↑" : "↓") : up ? "↗" : "↘";
+  const cls = up ? "trend-up" : "trend-down";
+  const sign = delta > 0 ? "+" : "";
+  return `<span class="trend ${cls}" title="${sign}${Math.round(delta)} rating over last 5 tournaments">${sym}</span>`;
+}
+
+function renderStats(roster, perChar, trends = new Map()) {
   statsBody.innerHTML = "";
   for (const r of roster) {
     const st = perChar.get(r.name) ?? {
@@ -125,7 +155,7 @@ function renderStats(roster, perChar) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${r.rank ?? ""}</td>
-      <td class="name-cell"><span class="char-name-wrap">${r.name}<img class="char-icon" src="${iconPath(r.name)}" alt="" onerror="this.style.display='none'"></span></td>
+      <td class="name-cell"><span class="char-name-wrap">${r.name}<img class="char-icon" src="${iconPath(r.name)}" alt="" onerror="this.style.display='none'">${trendIndicator(trends.get(canonKey(r.name)))}</span></td>
       <td>${r.elo}</td>
       <td>${r.rd ?? "—"}</td>
       <td>${st.matches}</td>
@@ -377,7 +407,7 @@ function renderParity() {
   marker.setAttribute("orient", "auto-start-reverse");
   const arrowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
   arrowPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
-  arrowPath.setAttribute("fill", "#374151");
+  arrowPath.setAttribute("fill", "#9ca3af");
   marker.appendChild(arrowPath);
   defs.appendChild(marker);
   paritySvg.appendChild(defs);
@@ -393,7 +423,7 @@ function renderParity() {
       line.setAttribute("y1", String(p1.y));
       line.setAttribute("x2", String(p2.x));
       line.setAttribute("y2", String(p2.y));
-      line.setAttribute("stroke", "#374151");
+      line.setAttribute("stroke", "#9ca3af");
       line.setAttribute("stroke-width", "2");
       line.setAttribute("opacity", "0.9");
       line.setAttribute("marker-end", "url(#parityArrow)");

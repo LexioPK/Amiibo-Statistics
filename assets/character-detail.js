@@ -8,7 +8,9 @@ import {
   pct,
   iconPath,
   portraitPath,
+  canonKey,
 } from "./lib.js";
+import { getSeasonTimeline } from "./rating-engine.js";
 
 const seasonSelect = document.getElementById("seasonSelect");
 const charSelect = document.getElementById("charSelect");
@@ -27,6 +29,8 @@ seasonSelect.value = "alltime";
 let currentCtx = null;
 let currentAgg = null;
 let isAllTime = false;
+let currentSeasonNum = SEASON_COUNT;
+let renderToken = 0;
 
 function setStatus(msg) {
   statusEl.textContent = msg;
@@ -37,6 +41,7 @@ function setStatus(msg) {
 async function loadSeason(season) {
   setStatus(`Loading season ${season}…`);
   isAllTime = false;
+  currentSeasonNum = season;
   charDetail.innerHTML = "";
   try {
     currentCtx = await loadSeasonRoster(season);
@@ -195,31 +200,17 @@ function buildPlacementsCard(tournamentResults, charName) {
   return `<div class="card placements-card"><h2>Placements</h2><div class="placement-list">${rows}</div>${totalNote}</div>`;
 }
 
-/**
- * Returns 1, 2, or 3 if charName is in the top-3 for the given stat
- * (higher = better), or null otherwise. Ties are treated inclusively
- * (e.g. if two chars share the top score, both get rank 1).
- */
-function getStatRank(charName, stat, perChar) {
-  const val = perChar.get(charName)?.[stat] ?? 0;
-  if (!val) return null;
+/** 1-based rank (ties share a rank) of charName for a numeric stat getter, or null if not eligible. */
+function rankBy(charName, perChar, getter) {
+  const mine = getter(perChar.get(charName));
+  if (mine == null) return null;
   let above = 0;
-  for (const [name, s] of perChar) {
-    if (name !== charName && (s[stat] ?? 0) > val) above++;
+  for (const [name, st] of perChar) {
+    if (name === charName) continue;
+    const v = getter(st);
+    if (v != null && v > mine) above++;
   }
-  return above < 3 ? above + 1 : null;
-}
-
-/** Win-rate rank (requires at least 1 match). */
-function getWinRateRank(charName, perChar) {
-  const entry = perChar.get(charName);
-  if (!entry || !entry.matches) return null;
-  const val = entry.wins / entry.matches;
-  let above = 0;
-  for (const [name, s] of perChar) {
-    if (name !== charName && s.matches > 0 && (s.wins / s.matches) > val) above++;
-  }
-  return above < 3 ? above + 1 : null;
+  return above + 1;
 }
 
 function medalClass(rank) {
@@ -227,6 +218,15 @@ function medalClass(rank) {
   if (rank === 2) return " medal-silver";
   if (rank === 3) return " medal-bronze";
   return "";
+}
+
+function statBlock(value, label, rank) {
+  return `
+          <div class="char-stat-block${medalClass(rank)}">
+            ${rank ? `<span class="stat-rank">#${rank}</span>` : ""}
+            <div class="char-stat-val">${value}</div>
+            <div class="char-stat-lbl">${label}</div>
+          </div>`;
 }
 
 // ── Build per-opponent matchup data from h2h map ──────────────────────────────
@@ -247,8 +247,9 @@ function buildOpponentStats(charName, h2hMap) {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 
-function renderCharDetail() {
+async function renderCharDetail() {
   if (!currentCtx || !currentAgg) return;
+  const token = ++renderToken;
 
   const charName = (charSelect ? charSelect.value : null) ?? urlChar;
   if (!charName) {
@@ -278,10 +279,18 @@ function renderCharDetail() {
   const worstWR = byWinRate[byWinRate.length - 1] ?? null;
 
   // Medal ranks for wins and upsets across all characters
-  const winsRank    = getStatRank(charName, "wins", currentAgg.perChar);
-  const upsetsRank  = getStatRank(charName, "upsets", currentAgg.perChar);
-  const matchesRank = getStatRank(charName, "matches", currentAgg.perChar);
-  const winRateRank = getWinRateRank(charName, currentAgg.perChar);
+  const pc = currentAgg.perChar;
+  const hasData = pc.has(charName);
+  const rk = (g) => (hasData ? rankBy(charName, pc, g) : null);
+  const winsRank    = rk((s) => s.wins);
+  const lossesRank  = rk((s) => s.losses);
+  const upsetsRank  = rk((s) => s.upsets);
+  const upsetLossesRank = rk((s) => s.upsetLosses ?? 0);
+  const matchesRank = rk((s) => s.matches);
+  const winRateRank = rk((s) => (s && s.matches > 0 ? s.wins / s.matches : null));
+
+  const chartData = await buildChartData(charName);
+  if (token !== renderToken) return;
 
   // Players not yet faced
   const facedNames = new Set(opponents.map((o) => o.opponent));
@@ -291,33 +300,10 @@ function renderCharDetail() {
     <div class="char-detail-header card">
       <img class="char-portrait" src="${portraitPath(charName)}" alt="${charName}" onerror="this.style.display='none'">
       <div class="char-detail-info">
-        <div class="char-detail-name">${charName}</div>
-        <div class="char-detail-rank muted">${rosterEntry ? `Rank #${rosterEntry.rank ?? "?"} · ${rosterEntry.elo} Rating${rosterEntry.rd != null ? ` (RD ${rosterEntry.rd})` : ""}` : ""}</div>
+        <div class="char-detail-name">${charName}${rosterEntry ? ` <span class="char-detail-rank-num">#${rosterEntry.rank ?? "?"}</span>` : ""}</div>
+        <div class="char-detail-rank muted">${rosterEntry ? `${rosterEntry.elo} Rating${rosterEntry.rd != null ? ` (RD ${rosterEntry.rd})` : ""}` : ""}</div>
         <div class="char-detail-stats-grid">
-          <div class="char-stat-block${medalClass(winRateRank)}">
-            <div class="char-stat-val">${winRate}${winRateRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][winRateRank-1]}</span>` : ""}</div>
-            <div class="char-stat-lbl">Win Rate</div>
-          </div>
-          <div class="char-stat-block${medalClass(winsRank)}">
-            <div class="char-stat-val">${stats.wins}${winsRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][winsRank-1]}</span>` : ""}</div>
-            <div class="char-stat-lbl">Wins</div>
-          </div>
-          <div class="char-stat-block">
-            <div class="char-stat-val">${stats.losses}</div>
-            <div class="char-stat-lbl">Losses</div>
-          </div>
-          <div class="char-stat-block${medalClass(matchesRank)}">
-            <div class="char-stat-val">${stats.matches}${matchesRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][matchesRank-1]}</span>` : ""}</div>
-            <div class="char-stat-lbl">Matches</div>
-          </div>
-          <div class="char-stat-block${medalClass(upsetsRank)}">
-            <div class="char-stat-val">${stats.upsets}${upsetsRank ? ` <span class="medal-label">${["🥇","🥈","🥉"][upsetsRank-1]}</span>` : ""}</div>
-            <div class="char-stat-lbl">Upsets Pulled</div>
-          </div>
-          <div class="char-stat-block">
-            <div class="char-stat-val">${stats.upsetLosses ?? 0}</div>
-            <div class="char-stat-lbl">Times Upset</div>
-          </div>
+${statBlock(winRate, "Win Rate", winRateRank)}${statBlock(stats.wins, "Wins", winsRank)}${statBlock(stats.losses, "Losses", lossesRank)}${statBlock(stats.matches, "Matches", matchesRank)}${statBlock(stats.upsets, "Upsets Pulled", upsetsRank)}${statBlock(stats.upsetLosses ?? 0, "Times Upset", upsetLossesRank)}
         </div>
       </div>
     </div>
@@ -326,8 +312,102 @@ function renderCharDetail() {
       ${buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups)}
       ${buildPlacementsCard(currentAgg.tournamentResults, charName)}
     </div>
-    ${buildNotFacedCard(notFaced)}
+    <div class="card-row">
+      ${buildRatingChartCard(chartData)}
+      ${buildRecentTournamentsCard(currentAgg.tournamentResults, charName)}
+    </div>
+    ${isAllTime ? buildNotFacedCard(notFaced) : ""}
   `;
+}
+
+// ── Rating chart + recent tournaments ─────────────────────────────────────────
+
+async function buildChartData(charName) {
+  const key = canonKey(charName);
+  let seasons = isAllTime
+    ? Array.from({ length: SEASON_COUNT }, (_, i) => SEASON_COUNT - i)
+    : [currentSeasonNum];
+  for (const season of seasons) {
+    try {
+      const { initialRating, points } = await getSeasonTimeline(season);
+      const pts = [{ label: "Start", rating: initialRating }];
+      let played = false;
+      for (const p of points) {
+        const r = p.ratings.get(key);
+        if (r) {
+          played = true;
+          pts.push({ label: p.file.replace(/\.txt$/i, ""), rating: r.rating });
+        }
+      }
+      if (played) return { season, points: pts };
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+  return null;
+}
+
+function buildRatingChartCard(data) {
+  if (!data || data.points.length < 2) {
+    return `<div class="card rating-chart-card"><h2>Rating Over the Season</h2><p class="muted">No rating data available.</p></div>`;
+  }
+  const W = 560, H = 220, L = 40, R = 14, T = 12, B = 26;
+  const ys = data.points.map((p) => p.rating);
+  let min = Math.min(...ys), max = Math.max(...ys);
+  if (max - min < 40) { min -= 20; max += 20; }
+  const pad = (max - min) * 0.1;
+  min -= pad; max += pad;
+  const n = data.points.length;
+  const x = (i) => L + (n === 1 ? 0 : (i / (n - 1)) * (W - L - R));
+  const y = (v) => T + (1 - (v - min) / (max - min)) * (H - T - B);
+  const path = data.points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.rating).toFixed(1)}`).join(" ");
+  let grid = "";
+  for (let i = 0; i <= 4; i++) {
+    const v = min + ((max - min) * i) / 4;
+    grid += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="chart-grid"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" class="chart-axis" text-anchor="end">${Math.round(v)}</text>`;
+  }
+  const dots = data.points.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.rating).toFixed(1)}" r="3.5" class="chart-dot"><title>${p.label}: ${Math.round(p.rating)}</title></circle>`).join("");
+  const last = data.points[n - 1];
+  return `
+    <div class="card rating-chart-card">
+      <h2>Rating Over Season ${data.season}</h2>
+      <svg class="rating-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rating over the season">
+        ${grid}
+        <path d="${path}" class="chart-line"/>
+        ${dots}
+        <text x="${W - R}" y="${H - 6}" class="chart-axis" text-anchor="end">Latest: ${Math.round(last.rating)} · ${n - 1} tournament${n - 1 !== 1 ? "s" : ""}</text>
+      </svg>
+    </div>`;
+}
+
+function placementText(p) {
+  if (p == null) return "—";
+  const b = placementBucket(p);
+  return b ? b.replace(/\s*[\u{1F300}-\u{1FAFF}]/u, "") : "—";
+}
+
+function buildRecentTournamentsCard(tournamentResults, charName) {
+  const rows = [];
+  for (const { name, result } of tournamentResults) {
+    let w = 0, l = 0;
+    for (const m of result.matches) {
+      if (m.winner === charName) w++;
+      else if (m.loser === charName) l++;
+    }
+    if (w + l === 0) continue;
+    rows.push({ name, w, l, placement: derivePlacement(result.sections, charName) });
+  }
+  const last5 = rows.slice(-5).reverse();
+  if (!last5.length) {
+    return `<div class="card recent-card"><h2>Last 5 Tournaments</h2><p class="muted">No tournament data.</p></div>`;
+  }
+  const items = last5.map((r) => `
+      <div class="recent-row">
+        <span class="recent-name" title="${r.name}">${r.name}</span>
+        <span class="recent-place">${placementText(r.placement)}</span>
+        <span class="recent-record">${r.w}-${r.l}</span>
+      </div>`).join("");
+  return `<div class="card recent-card"><h2>Last 5 Tournaments</h2>${items}</div>`;
 }
 
 function buildMatchupHighlightsCard(mostPlayed, bestWR, worstWR, charName, minMatchups) {

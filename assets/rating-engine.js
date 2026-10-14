@@ -221,6 +221,7 @@ async function buildHistory() {
   const seasonRawMaps = new Map(); // season number -> raw rating map (for weighted averaging)
   const tournamentPreSnapshots = new Map(); // "season::filename" -> ranked rows (as of just before that tournament)
   const tournamentPreRawMaps = new Map(); // "season::filename" -> raw rating map (as of just before that tournament)
+  const seasonTimelines = new Map(); // season number -> [{ file, map }] raw rating map after each tournament
 
   for (let season = 1; season <= SEASON_COUNT; season++) {
     players = new Map();
@@ -232,6 +233,9 @@ async function buildHistory() {
     } catch (e) {
       console.warn(`Season ${season} index:`, e.message);
     }
+
+    const timeline = [];
+    seasonTimelines.set(season, timeline);
 
     for (const file of files) {
       let text;
@@ -263,13 +267,15 @@ async function buildHistory() {
         const inflated = inflateForInactivity({ rating: p.rating, rd: p.rd, volatility: p.volatility });
         p.rd = inflated.rd;
       }
+
+      timeline.push({ file, map: rawSnapshotOf(players) });
     }
 
     seasonSnapshots.set(season, snapshotOf(players));
     seasonRawMaps.set(season, rawSnapshotOf(players));
   }
 
-  return { seasonSnapshots, seasonRawMaps, tournamentPreSnapshots, tournamentPreRawMaps };
+  return { seasonSnapshots, seasonRawMaps, tournamentPreSnapshots, tournamentPreRawMaps, seasonTimelines };
 }
 
 let historyPromise = null;
@@ -353,3 +359,17 @@ export async function getAllTimeRatingsBeforeTournament(season, filename) {
   return weightedAverageAcrossSeasons(seasonEntries, weights);
 }
 
+
+/**
+ * Rating timeline for one season: the season-reset rating of every player
+ * after each tournament, in order. Returns `{ initialRating, points }` where
+ * each point is `{ file, ratings: Map<canonKey, { rating, rd }> }`.
+ */
+export async function getSeasonTimeline(season) {
+  const history = await getHistory();
+  const points = (history.seasonTimelines.get(season) ?? []).map((t) => ({
+    file: t.file,
+    ratings: new Map([...t.map].map(([k, v]) => [k, { rating: v.rating, rd: v.rd }])),
+  }));
+  return { initialRating: createPlayer().rating, points };
+}
