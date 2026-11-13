@@ -162,7 +162,7 @@ function renderStats(roster, perChar, trends = new Map()) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${r.rank ?? ""}</td>
-      <td class="name-cell"><span class="char-name-wrap">${r.name}<img class="char-icon" src="${iconPath(r.name)}" alt="" onerror="this.style.display='none'">${trendIndicator(trends.get(canonKey(r.name)))}</span></td>
+      <td class="name-cell"><a class="char-link" href="${charLink(r.name)}"><span class="char-name-wrap">${r.name}<img class="char-icon" src="${iconPath(r.name)}" alt="" onerror="this.style.display='none'">${trendIndicator(trends.get(canonKey(r.name)))}</span></a></td>
       <td>${r.elo}</td>
       <td>${r.rd ?? "—"}</td>
       <td>${st.matches}</td>
@@ -176,6 +176,13 @@ function renderStats(roster, perChar, trends = new Map()) {
   }
 }
 
+const TOP_RANK_CUTOFF = 43;
+
+function charLink(name) {
+  const base = `./character.html?char=${encodeURIComponent(name)}`;
+  return isAllTime ? base : `${base}&season=${currentSeason}`;
+}
+
 function clearParity() {
   if (parityMeta) parityMeta.textContent = "";
   if (parityEmpty) parityEmpty.hidden = true;
@@ -185,277 +192,102 @@ function clearParity() {
   if (parityNodesCenter) parityNodesCenter.innerHTML = "";
 }
 
-function buildWinnerAdjacency(roster, h2hMap) {
-  const rosterSet = new Set(roster.map((r) => r.name));
-  const winsByChar = new Map(roster.map((r) => [r.name, new Set()]));
-  for (const [, row] of h2hMap) {
-    if (!rosterSet.has(row.a) || !rosterSet.has(row.b)) continue;
-    if (row.aWins > 0) winsByChar.get(row.a).add(row.b);
-    if (row.bWins > 0) winsByChar.get(row.b).add(row.a);
-  }
-  return winsByChar;
-}
-
-function cycleSlice(cycle, startIdx, endIdx) {
-  const out = [];
-  let i = startIdx;
-  while (true) {
-    out.push(cycle[i]);
-    if (i === endIdx) break;
-    i = (i + 1) % cycle.length;
-  }
-  return out;
-}
-
-function tryMergeCycles(c1, c2, winsByChar) {
-  const m = c1.length;
-  const n = c2.length;
-  for (let i = 0; i < m; i++) {
-    const a = c1[i];
-    const aNextIdx = (i + 1) % m;
-    const aNext = c1[aNextIdx];
-    const winsA = winsByChar.get(a) ?? new Set();
-    for (let j = 0; j < n; j++) {
-      const b = c2[j];
-      const bNext = c2[(j + 1) % n];
-      const winsB = winsByChar.get(b) ?? new Set();
-      if (!winsA.has(bNext) || !winsB.has(aNext)) continue;
-
-      const seg2 = cycleSlice(c2, (j + 1) % n, j);
-      const seg1 = cycleSlice(c1, aNextIdx, (i - 1 + m) % m);
-      return [a, ...seg2, ...seg1];
-    }
-  }
-  return null;
-}
-
-function mergeCyclesGreedy(cycles, winsByChar) {
-  const work = cycles.map((c) => c.slice());
-  if (work.length <= 1) return work;
-
-  let changed = true;
-  while (changed) {
-    changed = false;
-    work.sort((a, b) => b.length - a.length);
-
-    outer:
-    for (let i = 0; i < work.length; i++) {
-      for (let j = i + 1; j < work.length; j++) {
-        const merged = tryMergeCycles(work[i], work[j], winsByChar) ?? tryMergeCycles(work[j], work[i], winsByChar);
-        if (!merged) continue;
-        work.splice(j, 1);
-        work.splice(i, 1, merged);
-        changed = true;
-        break outer;
-      }
-    }
-  }
-
-  work.sort((a, b) => b.length - a.length);
-  return work;
-}
-
-function chooseParityCover(chars, winsByChar) {
-  const n = chars.length;
-  if (n === 0) return { succ: new Map(), cycles: [] };
-
-  const w = Array.from({ length: n + 1 }, () => Array(n + 1).fill(0));
-  for (let i = 1; i <= n; i++) {
-    const from = chars[i - 1];
-    const wins = winsByChar.get(from) ?? new Set();
-    for (let j = 1; j <= n; j++) {
-      const to = chars[j - 1];
-      if (i === j) w[i][j] = 0; // self means excluded from parity cycles
-      else if (wins.has(to)) w[i][j] = 1;
-      else w[i][j] = -1000000;
-    }
-  }
-
-  // Hungarian algorithm (maximization, 1-indexed)
-  const u = Array(n + 1).fill(0);
-  const v = Array(n + 1).fill(0);
-  const p = Array(n + 1).fill(0);
-  const way = Array(n + 1).fill(0);
-
-  for (let i = 1; i <= n; i++) {
-    p[0] = i;
-    let j0 = 0;
-    const minv = Array(n + 1).fill(Infinity);
-    const used = Array(n + 1).fill(false);
-    do {
-      used[j0] = true;
-      const i0 = p[j0];
-      let delta = Infinity;
-      let j1 = 0;
-      for (let j = 1; j <= n; j++) {
-        if (used[j]) continue;
-        const cur = -(w[i0][j]) - u[i0] - v[j];
-        if (cur < minv[j]) {
-          minv[j] = cur;
-          way[j] = j0;
-        }
-        if (minv[j] < delta) {
-          delta = minv[j];
-          j1 = j;
-        }
-      }
-      for (let j = 0; j <= n; j++) {
-        if (used[j]) {
-          u[p[j]] += delta;
-          v[j] -= delta;
-        } else {
-          minv[j] -= delta;
-        }
-      }
-      j0 = j1;
-    } while (p[j0] !== 0);
-
-    do {
-      const j1 = way[j0];
-      p[j0] = p[j1];
-      j0 = j1;
-    } while (j0 !== 0);
-  }
-
-  const succAll = new Map();
-  for (let j = 1; j <= n; j++) {
-    const i = p[j];
-    succAll.set(chars[i - 1], chars[j - 1]);
-  }
-
-  const visited = new Set();
-  const cycles = [];
-  for (const c of chars) {
-    if (visited.has(c)) continue;
-    const seen = new Map();
-    let cur = c;
-    while (!visited.has(cur) && !seen.has(cur)) {
-      seen.set(cur, seen.size);
-      cur = succAll.get(cur);
-      if (!cur) break;
-    }
-    for (const k of seen.keys()) visited.add(k);
-    if (cur && seen.has(cur)) {
-      const order = Array.from(seen.keys());
-      const start = seen.get(cur);
-      const cyc = order.slice(start);
-      if (cyc.length >= 2) cycles.push(cyc);
-    }
-  }
-
-  const mergedCycles = mergeCyclesGreedy(cycles, winsByChar);
-  const biggestCycle = mergedCycles.length > 0 ? mergedCycles[0] : null;
-  const succ = new Map();
-  if (biggestCycle) {
-    for (let i = 0; i < biggestCycle.length; i++) {
-      succ.set(biggestCycle[i], biggestCycle[(i + 1) % biggestCycle.length]);
-    }
-  }
-  return { succ, cycles: biggestCycle ? [biggestCycle] : [] };
-}
-
+/**
+ * Quadrant graph: x = share of game score won across all matches
+ * (own score / total score), y = win % against opponents ranked
+ * #TOP_RANK_CUTOFF or better.
+ */
 function renderParity() {
   clearParity();
   if (!currentCtx || !currentAgg) return;
 
-  const roster = currentCtx.roster;
-  const chars = roster.map((r) => r.name);
-  const winsByChar = buildWinnerAdjacency(roster, currentAgg.h2h);
-  const { succ, cycles } = chooseParityCover(chars, winsByChar);
-
-  const inCycle = new Set(cycles.flat());
-  const centerChars = chars.filter((c) => !inCycle.has(c));
-
-  const scopeLabel = isAllTime ? "All Time" : `Season ${currentSeason}`;
-  parityMeta.textContent = `${scopeLabel}: ${inCycle.size} in parity cycle${inCycle.size === 1 ? "" : "s"}, ${centerChars.length} in center.`;
-
-  if (inCycle.size === 0) {
-    parityEmpty.hidden = false;
-    return;
-  }
-
-  parityCanvas.hidden = false;
-
-  const W = 900;
-  const H = 900;
-  const cx = W / 2;
-  const cy = H / 2;
-  const outer = Array.from(inCycle);
-  const R = outer.length <= 8 ? 320 : outer.length <= 20 ? 350 : 370;
-
-  const pointByChar = new Map();
-  for (let i = 0; i < outer.length; i++) {
-    const theta = (2 * Math.PI * i / outer.length) - Math.PI / 2;
-    const x = cx + Math.cos(theta) * R;
-    const y = cy + Math.sin(theta) * R;
-    pointByChar.set(outer[i], { x, y });
-  }
-
-  const centerRows = Math.max(1, Math.ceil(Math.sqrt(centerChars.length || 1)));
-  const spacing = 58;
-  const x0 = cx - ((centerRows - 1) * spacing) / 2;
-  const y0 = cy - ((centerRows - 1) * spacing) / 2;
-  for (let i = 0; i < centerChars.length; i++) {
-    const col = i % centerRows;
-    const row = Math.floor(i / centerRows);
-    const x = x0 + col * spacing;
-    const y = y0 + row * spacing;
-    pointByChar.set(centerChars[i], { x, y });
-  }
-
-  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-  const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
-  marker.setAttribute("id", "parityArrow");
-  marker.setAttribute("viewBox", "0 0 10 10");
-  marker.setAttribute("refX", "9");
-  marker.setAttribute("refY", "5");
-  marker.setAttribute("markerWidth", "6");
-  marker.setAttribute("markerHeight", "6");
-  marker.setAttribute("orient", "auto-start-reverse");
-  const arrowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  arrowPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
-  arrowPath.setAttribute("fill", "#9ca3af");
-  marker.appendChild(arrowPath);
-  defs.appendChild(marker);
-  paritySvg.appendChild(defs);
-
-  for (const cyc of cycles) {
-    for (const from of cyc) {
-      const to = succ.get(from);
-      const p1 = pointByChar.get(from);
-      const p2 = pointByChar.get(to);
-      if (!p1 || !p2) continue;
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", String(p1.x));
-      line.setAttribute("y1", String(p1.y));
-      line.setAttribute("x2", String(p2.x));
-      line.setAttribute("y2", String(p2.y));
-      line.setAttribute("stroke", "#9ca3af");
-      line.setAttribute("stroke-width", "2");
-      line.setAttribute("opacity", "0.9");
-      line.setAttribute("marker-end", "url(#parityArrow)");
-      paritySvg.appendChild(line);
+  const rankByName = new Map(currentCtx.roster.map((r) => [r.name, r.rank]));
+  const acc = new Map();
+  const get = (n) => {
+    if (!acc.has(n)) acc.set(n, { own: 0, total: 0, topW: 0, topM: 0 });
+    return acc.get(n);
+  };
+  for (const { result } of currentAgg.tournamentResults) {
+    for (const m of result.matches) {
+      const tot = m.winnerScore + m.loserScore;
+      if (!(tot > 0)) continue;
+      const w = get(m.winner), l = get(m.loser);
+      w.own += m.winnerScore; w.total += tot;
+      l.own += m.loserScore; l.total += tot;
+      const wTop = (rankByName.get(m.winner) ?? Infinity) <= TOP_RANK_CUTOFF;
+      const lTop = (rankByName.get(m.loser) ?? Infinity) <= TOP_RANK_CUTOFF;
+      if (lTop) { w.topW++; w.topM++; }
+      if (wTop) { l.topM++; }
     }
   }
 
-  for (const name of outer) {
-    const p = pointByChar.get(name);
-    const node = document.createElement("div");
-    node.className = "parity-node";
-    node.style.left = `${(p.x / W) * 100}%`;
-    node.style.top = `${(p.y / H) * 100}%`;
-    node.innerHTML = `<img src="${iconPath(name)}" alt="${name}" onerror="this.style.display='none'">`;
-    parityNodesOuter.appendChild(node);
+  const pts = [];
+  for (const [name, a] of acc) {
+    if (!rankByName.has(name) || a.topM === 0 || a.total === 0) continue;
+    pts.push({ name, x: (a.own / a.total) * 100, y: (a.topW / a.topM) * 100 });
   }
 
-  for (const name of centerChars) {
-    const p = pointByChar.get(name);
-    const node = document.createElement("div");
-    node.className = "parity-node parity-node-center";
-    node.style.left = `${(p.x / W) * 100}%`;
-    node.style.top = `${(p.y / H) * 100}%`;
-    node.innerHTML = `<img src="${iconPath(name)}" alt="${name}" onerror="this.style.display='none'">`;
-    parityNodesCenter.appendChild(node);
+  const scopeLabel = isAllTime ? "All Time" : `Season ${currentSeason}`;
+  parityMeta.textContent = `${scopeLabel}: x = match score won %, y = win % vs. top ${TOP_RANK_CUTOFF} opponents. ${pts.length} characters plotted. Click an icon to open its page.`;
+  if (!pts.length) {
+    parityEmpty.hidden = false;
+    return;
+  }
+  parityCanvas.hidden = false;
+
+  const pad = (lo, hi) => {
+    lo = Math.min(lo, 50); hi = Math.max(hi, 50);
+    const d = Math.max(hi - lo, 10) * 0.08;
+    return [Math.max(0, lo - d), Math.min(100, hi + d)];
+  };
+  const [x0, x1] = pad(Math.min(...pts.map((q) => q.x)), Math.max(...pts.map((q) => q.x)));
+  const [y0, y1] = pad(Math.min(...pts.map((q) => q.y)), Math.max(...pts.map((q) => q.y)));
+  const px = (v) => ((v - x0) / (x1 - x0)) * 100;
+  const py = (v) => (1 - (v - y0) / (y1 - y0)) * 100;
+
+  const NS = "http://www.w3.org/2000/svg";
+  paritySvg.setAttribute("viewBox", "0 0 100 100");
+  paritySvg.setAttribute("preserveAspectRatio", "none");
+  const line = (a, b, c, d) => {
+    const el = document.createElementNS(NS, "line");
+    el.setAttribute("x1", a); el.setAttribute("y1", b);
+    el.setAttribute("x2", c); el.setAttribute("y2", d);
+    el.setAttribute("stroke", "#64748b");
+    el.setAttribute("stroke-width", "0.3");
+    el.setAttribute("vector-effect", "non-scaling-stroke");
+    paritySvg.appendChild(el);
+  };
+  line(px(50), 0, px(50), 100);
+  line(0, py(50), 100, py(50));
+
+  const label = (txt, cls) => {
+    const d = document.createElement("div");
+    d.className = `quad-label ${cls}`;
+    d.textContent = txt;
+    parityNodesOuter.appendChild(d);
+  };
+  label("Dominant", "quad-tr");
+  label("Clutch wins", "quad-tl");
+  label("Close losses", "quad-br");
+  label("Struggling", "quad-bl");
+  const axis = (txt, cls) => {
+    const d = document.createElement("div");
+    d.className = `quad-axis ${cls}`;
+    d.textContent = txt;
+    parityNodesOuter.appendChild(d);
+  };
+  axis(`Match score % →`, "quad-x");
+  axis(`Win % vs top ${TOP_RANK_CUTOFF} →`, "quad-y");
+
+  for (const q of pts) {
+    const a = document.createElement("a");
+    a.className = "parity-node";
+    a.href = charLink(q.name);
+    a.title = `${q.name}: ${q.x.toFixed(1)}% match score, ${q.y.toFixed(1)}% win vs top ${TOP_RANK_CUTOFF}`;
+    a.style.left = `${px(q.x)}%`;
+    a.style.top = `${py(q.y)}%`;
+    a.innerHTML = `<img src="${iconPath(q.name)}" alt="${q.name}" onerror="this.style.display='none'">`;
+    parityNodesCenter.appendChild(a);
   }
 }
 

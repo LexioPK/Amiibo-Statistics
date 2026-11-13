@@ -1,0 +1,10 @@
+import {chromium} from 'playwright';
+const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:1000}});
+p.on('pageerror',e=>console.log('ERR',e.message));
+await p.goto('http://localhost:8126/season.html');await p.waitForTimeout(1500);
+await p.selectOption('#seasonSelect','7');await p.waitForTimeout(8000);
+await p.click('#tabBtnParity');await p.waitForTimeout(500);
+await p.screenshot({path:'/tmp/pw/q.png'});
+await p.locator('.parity-node').first().click();await p.waitForTimeout(8000);
+console.log(p.url(), await p.inputValue('#seasonSelect'));
+await b.close();

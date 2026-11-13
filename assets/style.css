@@ -591,3 +591,21 @@ tr.upset-row td { background: #4a3f12 !important; }
 .char-nav-btn:hover { border-color: #60a5fa; }
 .char-nav-btn.next { margin-left: auto; }
 .season-tab-btn.active { color: #fff; }
+
+/* ── Quadrant graph ── */
+.parity-canvas { aspect-ratio: 1 / 1; }
+.parity-node { text-decoration: none; z-index: 1; }
+.parity-node img { width: 28px; height: 28px; }
+.parity-node:hover { z-index: 5; }
+.parity-node:hover img { transform: scale(1.5); border-color: #60a5fa; }
+.parity-layer { pointer-events: none; }
+.parity-layer-center { pointer-events: none; }
+.parity-layer-center .parity-node { pointer-events: auto; }
+.quad-label { position: absolute; font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+.quad-tl { top: 8px; left: 10px; } .quad-tr { top: 8px; right: 10px; }
+.quad-bl { bottom: 28px; left: 10px; } .quad-br { bottom: 28px; right: 10px; }
+.quad-axis { position: absolute; font-size: 0.72rem; color: #9ca3af; }
+.quad-x { bottom: 6px; left: 50%; transform: translateX(-50%); }
+.quad-y { top: 50%; left: 4px; transform: translateY(-50%) rotate(-90deg); transform-origin: left top; }
+.char-link { color: inherit; text-decoration: none; }
+.char-link:hover { color: #60a5fa; }

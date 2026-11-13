@@ -25,7 +25,9 @@ const urlChar = new URLSearchParams(window.location.search).get("char") ?? null;
 if (urlChar && charSelect) charSelect.closest("label")?.remove();
 
 populateSeasonSelect(seasonSelect, SEASON_COUNT);
-seasonSelect.value = "alltime";
+const urlSeason = Number(new URLSearchParams(window.location.search).get("season"));
+const startSeason = Number.isInteger(urlSeason) && urlSeason >= 1 && urlSeason <= SEASON_COUNT ? urlSeason : null;
+seasonSelect.value = startSeason ? String(startSeason) : "alltime";
 
 let currentCtx = null;
 let currentAgg = null;
@@ -515,4 +517,5 @@ seasonSelect.addEventListener("change", () => {
 
 if (charSelect) charSelect.addEventListener("change", renderCharDetail);
 
-loadAllTime();
+if (startSeason) loadSeason(startSeason);
+else loadAllTime();
