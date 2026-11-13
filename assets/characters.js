@@ -193,8 +193,8 @@ function clearParity() {
 }
 
 /**
- * Quadrant graph: x = share of game score won across all matches
- * (own score / total score), y = win % against opponents ranked
+ * Quadrant graph: x = average score differential per match against top-N
+ * opponents (3-0 = +3, 0-3 = -3), y = win % against opponents ranked
  * #TOP_RANK_CUTOFF or better.
  */
 function renderParity() {
@@ -204,43 +204,40 @@ function renderParity() {
   const rankByName = new Map(currentCtx.roster.map((r) => [r.name, r.rank]));
   const acc = new Map();
   const get = (n) => {
-    if (!acc.has(n)) acc.set(n, { own: 0, total: 0, topW: 0, topM: 0 });
+    if (!acc.has(n)) acc.set(n, { diff: 0, topW: 0, topM: 0 });
     return acc.get(n);
   };
   for (const { result } of currentAgg.tournamentResults) {
     for (const m of result.matches) {
-      const tot = m.winnerScore + m.loserScore;
-      if (!(tot > 0)) continue;
-      const w = get(m.winner), l = get(m.loser);
-      w.own += m.winnerScore; w.total += tot;
-      l.own += m.loserScore; l.total += tot;
       const wTop = (rankByName.get(m.winner) ?? Infinity) <= TOP_RANK_CUTOFF;
       const lTop = (rankByName.get(m.loser) ?? Infinity) <= TOP_RANK_CUTOFF;
-      if (lTop) { w.topW++; w.topM++; }
-      if (wTop) { l.topM++; }
+      const d = m.winnerScore - m.loserScore;
+      if (lTop) { const w = get(m.winner); w.topM++; w.topW++; w.diff += d; }
+      if (wTop) { const l = get(m.loser); l.topM++; l.diff -= d; }
     }
   }
 
   const pts = [];
   for (const [name, a] of acc) {
-    if (!rankByName.has(name) || a.topM === 0 || a.total === 0) continue;
-    pts.push({ name, x: (a.own / a.total) * 100, y: (a.topW / a.topM) * 100 });
+    if (!rankByName.has(name) || a.topM === 0) continue;
+    pts.push({ name, x: a.diff / a.topM, y: (a.topW / a.topM) * 100 });
   }
 
   const scopeLabel = isAllTime ? "All Time" : `Season ${currentSeason}`;
-  parityMeta.textContent = `${scopeLabel}: x = match score won %, y = win % vs. top ${TOP_RANK_CUTOFF} opponents. ${pts.length} characters plotted. Click an icon to open its page.`;
+  parityMeta.textContent = `${scopeLabel}: x = avg game-score differential per match (3-0 = +3, 0-3 = −3), y = win % vs. top ${TOP_RANK_CUTOFF} opponents. ${pts.length} characters plotted. Click an icon to open its page.`;
   if (!pts.length) {
     parityEmpty.hidden = false;
     return;
   }
   parityCanvas.hidden = false;
 
+  const xr = Math.max(0.5, ...pts.map((q) => Math.abs(q.x))) * 1.08;
+  const [x0, x1] = [-xr, xr];
   const pad = (lo, hi) => {
     lo = Math.min(lo, 50); hi = Math.max(hi, 50);
     const d = Math.max(hi - lo, 10) * 0.08;
     return [Math.max(0, lo - d), Math.min(100, hi + d)];
   };
-  const [x0, x1] = pad(Math.min(...pts.map((q) => q.x)), Math.max(...pts.map((q) => q.x)));
   const [y0, y1] = pad(Math.min(...pts.map((q) => q.y)), Math.max(...pts.map((q) => q.y)));
   const px = (v) => ((v - x0) / (x1 - x0)) * 100;
   const py = (v) => (1 - (v - y0) / (y1 - y0)) * 100;
@@ -257,7 +254,7 @@ function renderParity() {
     el.setAttribute("vector-effect", "non-scaling-stroke");
     paritySvg.appendChild(el);
   };
-  line(px(50), 0, px(50), 100);
+  line(px(0), 0, px(0), 100);
   line(0, py(50), 100, py(50));
 
   const label = (txt, cls) => {
@@ -276,14 +273,14 @@ function renderParity() {
     d.textContent = txt;
     parityNodesOuter.appendChild(d);
   };
-  axis(`Match score % →`, "quad-x");
+  axis(`Avg score differential vs top ${TOP_RANK_CUTOFF} →`, "quad-x");
   axis(`Win % vs top ${TOP_RANK_CUTOFF} →`, "quad-y");
 
   for (const q of pts) {
     const a = document.createElement("a");
     a.className = "parity-node";
     a.href = charLink(q.name);
-    a.title = `${q.name}: ${q.x.toFixed(1)}% match score, ${q.y.toFixed(1)}% win vs top ${TOP_RANK_CUTOFF}`;
+    a.title = `${q.name}: ${q.x >= 0 ? "+" : ""}${q.x.toFixed(2)} avg score diff, ${q.y.toFixed(1)}% win vs top ${TOP_RANK_CUTOFF}`;
     a.style.left = `${px(q.x)}%`;
     a.style.top = `${py(q.y)}%`;
     a.innerHTML = `<img src="${iconPath(q.name)}" alt="${q.name}" onerror="this.style.display='none'">`;
