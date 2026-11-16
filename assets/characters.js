@@ -176,8 +176,6 @@ function renderStats(roster, perChar, trends = new Map()) {
   }
 }
 
-const TOP_RANK_CUTOFF = 43;
-
 function charLink(name) {
   const base = `./character.html?char=${encodeURIComponent(name)}`;
   return isAllTime ? base : `${base}&season=${currentSeason}`;
@@ -193,52 +191,68 @@ function clearParity() {
 }
 
 /**
- * Quadrant graph: x = average score differential per match against top-N
- * opponents (3-0 = +3, 0-3 = -3), y = win % against opponents ranked
- * #TOP_RANK_CUTOFF or better.
+ * Quadrant graph.
+ *  Season:   x = average rating of opponents faced,
+ *            y = match closeness C = 1 - avg(|W-L| / (W+L)) over matches.
+ *  All Time: x = career win %, y = average rating of opponents faced.
  */
 function renderParity() {
   clearParity();
   if (!currentCtx || !currentAgg) return;
 
-  const rankByName = new Map(currentCtx.roster.map((r) => [r.name, r.rank]));
+  const eloByName = new Map(currentCtx.roster.map((r) => [r.name, r.elo]));
   const acc = new Map();
   const get = (n) => {
-    if (!acc.has(n)) acc.set(n, { diff: 0, topW: 0, topM: 0 });
+    if (!acc.has(n)) acc.set(n, { m: 0, wins: 0, oppSum: 0, oppN: 0, dSum: 0, dN: 0 });
     return acc.get(n);
+  };
+  const record = (self, opp, won, w, l) => {
+    const a = get(self);
+    a.m++;
+    if (won) a.wins++;
+    const oe = eloByName.get(opp);
+    if (oe != null) { a.oppSum += oe; a.oppN++; }
+    if (w + l > 0) { a.dSum += Math.abs(w - l) / (w + l); a.dN++; }
   };
   for (const { result } of currentAgg.tournamentResults) {
     for (const m of result.matches) {
-      const wTop = (rankByName.get(m.winner) ?? Infinity) <= TOP_RANK_CUTOFF;
-      const lTop = (rankByName.get(m.loser) ?? Infinity) <= TOP_RANK_CUTOFF;
-      const d = m.winnerScore - m.loserScore;
-      if (lTop) { const w = get(m.winner); w.topM++; w.topW++; w.diff += d; }
-      if (wTop) { const l = get(m.loser); l.topM++; l.diff -= d; }
+      record(m.winner, m.loser, true, m.winnerScore, m.loserScore);
+      record(m.loser, m.winner, false, m.winnerScore, m.loserScore);
     }
   }
 
   const pts = [];
   for (const [name, a] of acc) {
-    if (!rankByName.has(name) || a.topM === 0) continue;
-    pts.push({ name, x: a.diff / a.topM, y: (a.topW / a.topM) * 100 });
+    if (!eloByName.has(name) || a.oppN === 0 || a.dN === 0) continue;
+    const opp = a.oppSum / a.oppN;
+    const closeness = 1 - a.dSum / a.dN;
+    const winPct = (a.wins / a.m) * 100;
+    pts.push(isAllTime
+      ? { name, x: winPct, y: opp, tip: `${winPct.toFixed(1)}% career win rate, ${Math.round(opp)} avg opponent rating` }
+      : { name, x: opp, y: closeness, tip: `${Math.round(opp)} avg opponent rating, ${closeness.toFixed(2)} match closeness` });
   }
 
   const scopeLabel = isAllTime ? "All Time" : `Season ${currentSeason}`;
-  parityMeta.textContent = `${scopeLabel}: x = avg game-score differential per match (3-0 = +3, 0-3 = −3), y = win % vs. top ${TOP_RANK_CUTOFF} opponents. ${pts.length} characters plotted. Click an icon to open its page.`;
+  parityMeta.textContent = isAllTime
+    ? `${scopeLabel}: x = career win %, y = average rating of opponents faced. ${pts.length} characters plotted. Click an icon to open its page.`
+    : `${scopeLabel}: x = average rating of opponents faced, y = match closeness (1 − avg |W−L| / (W+L)). ${pts.length} characters plotted. Click an icon to open its page.`;
   if (!pts.length) {
     parityEmpty.hidden = false;
     return;
   }
   parityCanvas.hidden = false;
 
-  const xr = Math.max(0.5, ...pts.map((q) => Math.abs(q.x))) * 1.08;
-  const [x0, x1] = [-xr, xr];
-  const pad = (lo, hi) => {
-    lo = Math.min(lo, 50); hi = Math.max(hi, 50);
-    const d = Math.max(hi - lo, 10) * 0.08;
-    return [Math.max(0, lo - d), Math.min(100, hi + d)];
+  const range = (vals) => {
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi - lo < 1e-6) { lo -= 1; hi += 1; }
+    const d = (hi - lo) * 0.08;
+    return [lo - d, hi + d];
   };
-  const [y0, y1] = pad(Math.min(...pts.map((q) => q.y)), Math.max(...pts.map((q) => q.y)));
+  const mean = (vals) => vals.reduce((t, v) => t + v, 0) / vals.length;
+  const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
+  const [x0, x1] = range(xs);
+  const [y0, y1] = range(ys);
+  const xMid = mean(xs), yMid = mean(ys);
   const px = (v) => ((v - x0) / (x1 - x0)) * 100;
   const py = (v) => (1 - (v - y0) / (y1 - y0)) * 100;
 
@@ -254,33 +268,30 @@ function renderParity() {
     el.setAttribute("vector-effect", "non-scaling-stroke");
     paritySvg.appendChild(el);
   };
-  line(px(0), 0, px(0), 100);
-  line(0, py(50), 100, py(50));
+  line(px(xMid), 0, px(xMid), 100);
+  line(0, py(yMid), 100, py(yMid));
 
-  const label = (txt, cls) => {
+  const addText = (txt, cls) => {
     const d = document.createElement("div");
-    d.className = `quad-label ${cls}`;
+    d.className = cls;
     d.textContent = txt;
     parityNodesOuter.appendChild(d);
   };
-  label("Dominant", "quad-tr");
-  label("Clutch wins", "quad-tl");
-  label("Close losses", "quad-br");
-  label("Struggling", "quad-bl");
-  const axis = (txt, cls) => {
-    const d = document.createElement("div");
-    d.className = `quad-axis ${cls}`;
-    d.textContent = txt;
-    parityNodesOuter.appendChild(d);
-  };
-  axis(`Avg score differential vs top ${TOP_RANK_CUTOFF} →`, "quad-x");
-  axis(`Win % vs top ${TOP_RANK_CUTOFF} →`, "quad-y");
+  const labels = isAllTime
+    ? { tr: "Elite", tl: "Battle-tested", br: "Beating weaker foes", bl: "Struggling" }
+    : { tr: "Tough & tight", tl: "Easy & tight", br: "Tough & lopsided", bl: "Easy & lopsided" };
+  addText(labels.tr, "quad-label quad-tr");
+  addText(labels.tl, "quad-label quad-tl");
+  addText(labels.br, "quad-label quad-br");
+  addText(labels.bl, "quad-label quad-bl");
+  addText(isAllTime ? "Career win % →" : "Avg opponent rating →", "quad-axis quad-x");
+  addText(isAllTime ? "Avg opponent rating →" : "Match closeness →", "quad-axis quad-y");
 
   for (const q of pts) {
     const a = document.createElement("a");
     a.className = "parity-node";
     a.href = charLink(q.name);
-    a.title = `${q.name}: ${q.x >= 0 ? "+" : ""}${q.x.toFixed(2)} avg score diff, ${q.y.toFixed(1)}% win vs top ${TOP_RANK_CUTOFF}`;
+    a.title = `${q.name}: ${q.tip}`;
     a.style.left = `${px(q.x)}%`;
     a.style.top = `${py(q.y)}%`;
     a.innerHTML = `<img src="${iconPath(q.name)}" alt="${q.name}" onerror="this.style.display='none'">`;
