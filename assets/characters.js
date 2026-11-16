@@ -192,9 +192,8 @@ function clearParity() {
 
 /**
  * Quadrant graph.
- *  Season:   x = average rating of opponents faced,
- *            y = match closeness C = 1 - avg(|W-L| / (W+L)) over matches.
- *  All Time: x = career win %, y = average rating of opponents faced.
+ *  Season:   x = match closeness C = 1 - avg(|W-L| / (W+L)), y = average opponent rating.
+ *  All Time: x = average opponent rating, y = win %.
  */
 function renderParity() {
   clearParity();
@@ -228,14 +227,14 @@ function renderParity() {
     const closeness = 1 - a.dSum / a.dN;
     const winPct = (a.wins / a.m) * 100;
     pts.push(isAllTime
-      ? { name, x: winPct, y: opp, tip: `${winPct.toFixed(1)}% career win rate, ${Math.round(opp)} avg opponent rating` }
-      : { name, x: opp, y: closeness, tip: `${Math.round(opp)} avg opponent rating, ${closeness.toFixed(2)} match closeness` });
+      ? { name, x: opp, y: winPct, tip: `${Math.round(opp)} avg opponent rating, ${winPct.toFixed(1)}% win rate` }
+      : { name, x: closeness, y: opp, tip: `${Math.round(opp)} avg opponent rating, ${closeness.toFixed(2)} match closeness` });
   }
 
   const scopeLabel = isAllTime ? "All Time" : `Season ${currentSeason}`;
   parityMeta.textContent = isAllTime
-    ? `${scopeLabel}: x = career win %, y = average rating of opponents faced. ${pts.length} characters plotted. Click an icon to open its page.`
-    : `${scopeLabel}: x = average rating of opponents faced, y = match closeness (1 − avg |W−L| / (W+L)). ${pts.length} characters plotted. Click an icon to open its page.`;
+    ? `${scopeLabel}: x = average opponent rating, y = win % against those opponents. ${pts.length} characters plotted. Click an icon to open its page.`
+    : `${scopeLabel}: x = match closeness (1 − avg |W−L| / (W+L)), y = average rating of opponents faced. ${pts.length} characters plotted. Click an icon to open its page.`;
   if (!pts.length) {
     parityEmpty.hidden = false;
     return;
@@ -278,14 +277,14 @@ function renderParity() {
     parityNodesOuter.appendChild(d);
   };
   const labels = isAllTime
-    ? { tr: "Elite", tl: "Battle-tested", br: "Beating weaker foes", bl: "Struggling" }
-    : { tr: "Tough & tight", tl: "Easy & tight", br: "Tough & lopsided", bl: "Easy & lopsided" };
+    ? { tr: "Beating tough foes", tl: "Beating weaker foes", br: "Struggling vs tough foes", bl: "Struggling vs weaker foes" }
+    : { tr: "Tough & tight", tl: "Tough & lopsided", br: "Easy & tight", bl: "Easy & lopsided" };
   addText(labels.tr, "quad-label quad-tr");
   addText(labels.tl, "quad-label quad-tl");
   addText(labels.br, "quad-label quad-br");
   addText(labels.bl, "quad-label quad-bl");
-  addText(isAllTime ? "Career win % →" : "Avg opponent rating →", "quad-axis quad-x");
-  addText(isAllTime ? "Avg opponent rating →" : "Match closeness →", "quad-axis quad-y");
+  addText(isAllTime ? "Avg opponent rating →" : "Match closeness →", "quad-axis quad-x");
+  addText(isAllTime ? "Win % vs opponents →" : "Avg opponent rating →", "quad-axis quad-y");
 
   for (const q of pts) {
     const a = document.createElement("a");
